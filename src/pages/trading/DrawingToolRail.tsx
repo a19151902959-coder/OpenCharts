@@ -44,47 +44,47 @@ const GROUPS: ToolGroup[] = [
   {
     id: "lines",
     icon: TrendingUp,
-    label: "Lines",
+    label: "线条",
     tools: [
-      { tool: "trendline", icon: TrendingUp, label: "Trend Line" },
-      { tool: "ray", icon: MoveUpRight, label: "Ray" },
-      { tool: "extended", icon: Spline, label: "Extended Line" },
-      { tool: "horizontal", icon: Minus, label: "Horizontal Line" },
-      { tool: "vertical", icon: MoveVertical, label: "Vertical Line" },
-      { tool: "channel", icon: Equal, label: "Parallel Channel" },
+      { tool: "trendline", icon: TrendingUp, label: "趋势线" },
+      { tool: "ray", icon: MoveUpRight, label: "射线" },
+      { tool: "extended", icon: Spline, label: "延长线" },
+      { tool: "horizontal", icon: Minus, label: "水平线" },
+      { tool: "vertical", icon: MoveVertical, label: "垂直线" },
+      { tool: "channel", icon: Equal, label: "平行通道" },
     ],
   },
   {
     id: "fib",
     icon: Layers,
-    label: "Fibonacci",
+    label: "斐波那契",
     tools: [
-      { tool: "fibonacci", icon: Layers, label: "Fib Retracement" },
-      { tool: "fibextension", icon: Layers3, label: "Fib Extension" },
+      { tool: "fibonacci", icon: Layers, label: "斐波那契回撤" },
+      { tool: "fibextension", icon: Layers3, label: "斐波那契扩展" },
     ],
   },
   {
     id: "shapes",
     icon: Square,
-    label: "Shapes",
+    label: "图形",
     tools: [
-      { tool: "rectangle", icon: Square, label: "Rectangle" },
-      { tool: "ellipse", icon: Circle, label: "Ellipse" },
-      { tool: "triangle", icon: Triangle, label: "Triangle" },
-      { tool: "arrow", icon: ArrowRight, label: "Arrow" },
+      { tool: "rectangle", icon: Square, label: "矩形" },
+      { tool: "ellipse", icon: Circle, label: "椭圆" },
+      { tool: "triangle", icon: Triangle, label: "三角形" },
+      { tool: "arrow", icon: ArrowRight, label: "箭头" },
     ],
   },
   {
     id: "trade",
     icon: ArrowUpRight,
-    label: "Trade",
+    label: "交易",
     tools: [
-      { tool: "long-position", icon: ArrowUpRight, label: "Long Position" },
-      { tool: "short-position", icon: ArrowDownRight, label: "Short Position" },
-      { tool: "measure", icon: Ruler, label: "Measure" },
+      { tool: "long-position", icon: ArrowUpRight, label: "做多仓位" },
+      { tool: "short-position", icon: ArrowDownRight, label: "做空仓位" },
+      { tool: "measure", icon: Ruler, label: "测量" },
     ],
   },
-  { id: "text", icon: Type, label: "Text", tools: [{ tool: "text", icon: Type, label: "Text" }] },
+  { id: "text", icon: Type, label: "文本", tools: [{ tool: "text", icon: Type, label: "文本" }] },
 ];
 
 function RailButton({
@@ -189,7 +189,7 @@ export function DrawingToolRail({
     return (
       <button
         type="button"
-        title="Show drawing tools"
+        title="显示绘图工具"
         onClick={() => setHidden(false)}
         style={drag.style}
         className="absolute left-1 top-1 z-20 rounded-md border border-border bg-card/90 p-1.5 text-muted-foreground backdrop-blur-sm hover:text-primary"
@@ -207,14 +207,14 @@ export function DrawingToolRail({
     >
       <div
         onPointerDown={drag.onPointerDown}
-        title="Drag to move"
+        title="拖动移动"
         className="flex w-full cursor-move justify-center py-0.5 text-muted-foreground/50 hover:text-muted-foreground"
       >
         <GripVertical className="h-3.5 w-3.5" />
       </div>
       <RailButton
         icon={MousePointer2}
-        title="Cursor"
+        title="光标"
         active={drawingTool === "none"}
         onClick={() => {
           onDrawingTool("none");
@@ -232,7 +232,7 @@ export function DrawingToolRail({
         />
       ))}
       <div className="my-0.5 w-full border-t border-border/50" />
-      <RailButton icon={EyeOff} title="Hide toolbar" onClick={hide} />
+      <RailButton icon={EyeOff} title="隐藏工具栏" onClick={hide} />
     </div>
   );
 }

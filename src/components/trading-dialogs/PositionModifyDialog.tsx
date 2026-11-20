@@ -73,7 +73,7 @@ export function PositionModifyDialog({
 
   const handleModify = async () => {
     if (!isFeedConnected) {
-      toast.error("No Data Feed", "Cannot modify positions while disconnected from the data feed");
+      toast.error("无行情数据", "未连接行情，无法修改持仓");
       return;
     }
     const mods: { takeProfit?: number | null; stopLoss?: number | null } = {};
@@ -90,24 +90,24 @@ export function PositionModifyDialog({
       mods.stopLoss = parseFloat(sl);
     }
     if (Object.keys(mods).length === 0) {
-      toast.info("No Changes", "No modifications to apply");
+      toast.info("没有修改", "没有可应用的修改");
       return;
     }
     setSaving(true);
     try {
       await api.modifyPosition(position.id, mods);
-      toast.success("Position Modified", "TP/SL updated successfully");
+      toast.success("持仓已修改", "止盈/止损已更新");
       onSaved();
       onClose();
     } catch (err: unknown) {
       const e = err as { code?: string; message?: string };
       if (e?.code === "REQUEST_TIMEOUT") {
         toast.error(
-          "Request Timed Out",
-          "The server didn't respond in time. Check your connection and try again.",
+          "请求超时",
+          "服务器未及时响应，请检查网络后重试",
         );
       } else {
-        toast.error("Modify Failed", e.message || "Could not modify position");
+        toast.error("修改失败", e.message || "无法修改持仓");
       }
     } finally {
       setSaving(false);
@@ -116,29 +116,29 @@ export function PositionModifyDialog({
 
   const handlePartialClose = async () => {
     if (!isFeedConnected) {
-      toast.error("No Data Feed", "Cannot close positions while disconnected from the data feed");
+      toast.error("无行情数据", "未连接行情，无法平仓");
       return;
     }
     const qty = parseFloat(partialQty);
     if (isNaN(qty) || qty <= 0 || qty > position.quantity) {
-      toast.warning("Invalid Quantity", `Enter a value between 0.01 and ${position.quantity}`);
+      toast.warning("数量无效", `请输入 0.01 到 ${position.quantity} 之间的值`);
       return;
     }
     setSaving(true);
     try {
       await api.closePosition(position.id, qty);
-      toast.success("Partial Close", `Closed ${formatQty(qty)} of ${formatQty(position.quantity)}`);
+      toast.success("部分平仓", `已平仓 ${formatQty(qty)} / ${formatQty(position.quantity)}`);
       onSaved();
       onClose();
     } catch (err: unknown) {
       const e = err as { code?: string; message?: string };
       if (e?.code === "REQUEST_TIMEOUT") {
         toast.error(
-          "Request Timed Out",
-          "The server didn't respond in time. Check your connection and try again.",
+          "请求超时",
+          "服务器未及时响应，请检查网络后重试",
         );
       } else {
-        toast.error("Close Failed", e.message || "Could not partially close position");
+        toast.error("Close Failed", e.message || "无法部分平仓");
       }
     } finally {
       setSaving(false);
@@ -147,7 +147,7 @@ export function PositionModifyDialog({
 
   const handleSetBreakeven = () => {
     setSl(String(position.entryPrice));
-    toast.info("Breakeven", "Stop Loss set to entry price — click Save to apply");
+    toast.info("Breakeven", "止损已设为入场价——点击保存以应用");
   };
 
   // Risk/reward calculation
@@ -192,9 +192,9 @@ export function PositionModifyDialog({
                 )}
               </div>
               <div>
-                <h3 className="text-sm font-semibold">Modify {position.symbolName}</h3>
+                <h3 className="text-sm font-semibold">修改 {position.symbolName}</h3>
                 <p className="text-[10px] text-muted-foreground">
-                  {position.side} {position.quantity} @ {formatNumber(position.entryPrice, 5)}
+                  {position.side === "LONG" ? "做多" : position.side === "SHORT" ? "做空" : position.side} {position.quantity} @ {formatNumber(position.entryPrice, 5)}
                 </p>
               </div>
             </div>
@@ -206,11 +206,11 @@ export function PositionModifyDialog({
           {/* Current Status */}
           <div className="px-5 py-3 grid grid-cols-3 gap-3 border-b border-border/40 text-center">
             <div>
-              <div className="text-[10px] text-muted-foreground">Current</div>
+              <div className="text-[10px] text-muted-foreground">现价</div>
               <div className="text-sm font-mono font-semibold">{formatNumber(currentPrice, 5)}</div>
             </div>
             <div>
-              <div className="text-[10px] text-muted-foreground">P&L</div>
+              <div className="text-[10px] text-muted-foreground">盈亏</div>
               <div
                 className={cn(
                   "text-sm font-mono font-semibold",
@@ -223,7 +223,7 @@ export function PositionModifyDialog({
             </div>
             {instrumentType === "FOREX" && (
               <div>
-                <div className="text-[10px] text-muted-foreground">Pips</div>
+                <div className="text-[10px] text-muted-foreground">点数</div>
                 <div
                   className={cn(
                     "text-sm font-mono font-semibold",
@@ -241,10 +241,10 @@ export function PositionModifyDialog({
             <div className="mx-5 mt-3 bg-destructive/10 border border-destructive/30 rounded px-3 py-2 text-center">
               <div className="flex items-center justify-center gap-1.5 text-destructive text-xs font-semibold">
                 <WifiOff className="h-3.5 w-3.5" />
-                Data Feed Disconnected
+                行情已断开
               </div>
               <p className="text-[10px] text-muted-foreground mt-0.5">
-                Modifications disabled until connection is restored
+                恢复连接前无法修改
               </p>
             </div>
           )}
@@ -260,7 +260,7 @@ export function PositionModifyDialog({
               )}
               onClick={() => setActiveTab("modify")}
             >
-              <SlidersHorizontal className="h-3 w-3 inline mr-1" /> Modify TP/SL
+              <SlidersHorizontal className="h-3 w-3 inline mr-1" /> 修改止盈/止损
             </button>
             <button
               className={cn(
@@ -271,7 +271,7 @@ export function PositionModifyDialog({
               )}
               onClick={() => setActiveTab("partial")}
             >
-              <ArrowLeftRight className="h-3 w-3 inline mr-1" /> Partial Close
+              <ArrowLeftRight className="h-3 w-3 inline mr-1" /> 部分平仓
             </button>
           </div>
 
@@ -283,7 +283,7 @@ export function PositionModifyDialog({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                      <Target className="h-3 w-3 text-buy" /> Take Profit
+                      <Target className="h-3 w-3 text-buy" /> 止盈
                     </label>
                     {tpPnl !== null && (
                       <span
@@ -292,7 +292,7 @@ export function PositionModifyDialog({
                           tpPnl >= 0 ? "text-buy" : "text-sell",
                         )}
                       >
-                        Est: {tpPnl >= 0 ? "+" : ""}
+                        预计：{tpPnl >= 0 ? "+" : ""}
                         {formatCurrency(tpPnl)}
                       </span>
                     )}
@@ -301,7 +301,7 @@ export function PositionModifyDialog({
                     type="number"
                     value={tp}
                     onChange={(e) => setTp(e.target.value)}
-                    placeholder={position.takeProfit ? String(position.takeProfit) : "Not set"}
+                    placeholder={position.takeProfit ? String(position.takeProfit) : "未设置"}
                     className="w-full text-sm font-mono"
                     step="0.00001"
                   />
@@ -312,7 +312,7 @@ export function PositionModifyDialog({
                       className="text-[10px] h-5 mt-1 text-muted-foreground"
                       onClick={() => setTp("")}
                     >
-                      Remove TP
+                      删除止盈
                     </Button>
                   )}
                 </div>
@@ -321,7 +321,7 @@ export function PositionModifyDialog({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                      <Shield className="h-3 w-3 text-sell" /> Stop Loss
+                      <Shield className="h-3 w-3 text-sell" /> 止损
                     </label>
                     {slPnl !== null && (
                       <span
@@ -330,7 +330,7 @@ export function PositionModifyDialog({
                           slPnl >= 0 ? "text-buy" : "text-sell",
                         )}
                       >
-                        Est: {slPnl >= 0 ? "+" : ""}
+                        预计：{slPnl >= 0 ? "+" : ""}
                         {formatCurrency(slPnl)}
                       </span>
                     )}
@@ -339,7 +339,7 @@ export function PositionModifyDialog({
                     type="number"
                     value={sl}
                     onChange={(e) => setSl(e.target.value)}
-                    placeholder={position.stopLoss ? String(position.stopLoss) : "Not set"}
+                    placeholder={position.stopLoss ? String(position.stopLoss) : "未设置"}
                     className="w-full text-sm font-mono"
                     step="0.00001"
                   />
@@ -350,7 +350,7 @@ export function PositionModifyDialog({
                       className="text-[10px] h-5 text-muted-foreground"
                       onClick={handleSetBreakeven}
                     >
-                      Breakeven ({formatNumber(position.entryPrice, 5)})
+                      保本（{formatNumber(position.entryPrice, 5)}）
                     </Button>
                     {sl && (
                       <Button
@@ -359,7 +359,7 @@ export function PositionModifyDialog({
                         className="text-[10px] h-5 text-muted-foreground"
                         onClick={() => setSl("")}
                       >
-                        Remove SL
+                        删除止损
                       </Button>
                     )}
                   </div>
@@ -368,7 +368,7 @@ export function PositionModifyDialog({
                 {/* Risk/Reward */}
                 {riskReward !== null && (
                   <div className="bg-secondary/50 rounded-lg p-2 text-center">
-                    <span className="text-[10px] text-muted-foreground">Risk:Reward</span>
+                    <span className="text-[10px] text-muted-foreground">风险:收益</span>
                     <span
                       className={cn(
                         "text-sm font-mono font-semibold ml-2",
@@ -390,7 +390,7 @@ export function PositionModifyDialog({
                   disabled={saving || !isFeedConnected}
                   loading={saving}
                 >
-                  {saving ? "Saving..." : !isFeedConnected ? "Disconnected" : "Save Changes"}
+                  {saving ? "保存中…" : !isFeedConnected ? "未连接" : "保存修改"}
                 </Button>
               </>
             )}
@@ -399,13 +399,13 @@ export function PositionModifyDialog({
               <>
                 <div>
                   <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                    Close Volume ({unitLabel})
+                    平仓数量（{unitLabel}）
                   </label>
                   <input
                     type="number"
                     value={partialQty}
                     onChange={(e) => setPartialQty(e.target.value)}
-                    placeholder={`Max: ${position.quantity}`}
+                    placeholder={`最大：${position.quantity}`}
                     className="w-full mt-1 text-sm font-mono"
                     step={isFutures ? "1" : "0.01"}
                     min={isFutures ? "1" : "0.01"}
@@ -449,10 +449,10 @@ export function PositionModifyDialog({
                   loading={saving}
                 >
                   {saving
-                    ? "Closing..."
+                    ? "平仓中…"
                     : !isFeedConnected
-                      ? "Disconnected"
-                      : `Close ${partialQty || "?"} ${unitLabel}`}
+                      ? "未连接"
+                      : `平仓 ${partialQty || "?"} ${unitLabel}`}
                 </Button>
               </>
             )}

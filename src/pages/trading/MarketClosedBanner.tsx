@@ -177,7 +177,7 @@ function ScheduleMarketClosedBanner({ symbolInfo }: Props) {
         {msUntilOpen != null && (
           <>
             {" "}
-            · Opens in{" "}
+            · 距开盘{" "}
             <span className="font-mono tabular-nums">
               {formatCountdown(msUntilOpen - (new Date().getTime() - now.getTime()))}
             </span>

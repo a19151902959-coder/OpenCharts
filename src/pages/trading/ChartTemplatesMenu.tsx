@@ -65,12 +65,12 @@ function useChartTemplates() {
     mutationFn: (vars: { name: string; content: ChartTemplateContent }) =>
       chartTemplatesApi.save(vars.name, vars.content),
     onSuccess: invalidate,
-    onError: () => toast.error("Templates", "Failed to save template"),
+    onError: () => toast.error("模板", "保存模板失败"),
   });
   const remove = useMutation({
     mutationFn: (id: string) => chartTemplatesApi.remove(id),
     onSuccess: invalidate,
-    onError: () => toast.error("Templates", "Failed to delete template"),
+    onError: () => toast.error("模板", "删除模板失败"),
   });
   return { templates, save, remove };
 }
@@ -169,7 +169,7 @@ function AddTemplateRow({ onAdd }: { onAdd: (name: string) => void }) {
     return (
       <MenuRow
         icon={<Plus className="h-3.5 w-3.5" />}
-        label="Add template"
+        label="添加模板"
         onClick={() => setAdding(true)}
       />
     );
@@ -191,7 +191,7 @@ function AddTemplateRow({ onAdd }: { onAdd: (name: string) => void }) {
           if (e.key === "Escape") setAdding(false);
         }}
         onBlur={commit}
-        placeholder="Template name…"
+        placeholder="模板名称…"
         className="w-full rounded border border-border bg-transparent px-2 py-1 text-xs text-foreground outline-none focus:border-primary"
       />
     </div>
@@ -268,13 +268,13 @@ export function ChartTemplatesMenu(props: ChartTemplatesMenuProps) {
     onSetIndicators((c.indicators ?? []) as IndicatorType[]);
     onSetPlugins(c.plugins ?? []);
     setOpen(false);
-    toast.info("Templates", `Loaded "${t.name}"`);
+    toast.info("模板", `已加载“${t.name}”`);
   };
 
   const addTemplate = (name: string) => {
     save.mutate({ name, content });
     updateChartPreferences({ activeChartTemplate: name });
-    toast.success("Templates", `Saved "${name}"`);
+    toast.success("模板", `已保存“${name}”`);
   };
 
   const deleteTemplate = (t: ChartTemplate) => {
@@ -286,14 +286,14 @@ export function ChartTemplatesMenu(props: ChartTemplatesMenuProps) {
     <div className="relative hidden md:block">
       <button
         onClick={() => setOpen((v) => !v)}
-        title="Chart layout templates"
+        title="图表布局模板"
         className={cn(
           "flex items-center gap-1 rounded px-2 py-1 text-xs transition-colors",
           open ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground",
         )}
       >
         <CloudUpload className="h-3.5 w-3.5" />
-        <span className="hidden max-w-[110px] truncate lg:inline">{activeName || "Templates"}</span>
+        <span className="hidden max-w-[110px] truncate lg:inline">{activeName || "模板"}</span>
         <ChevronDown className={cn("h-3 w-3 transition-transform", open && "rotate-180")} />
       </button>
 
@@ -311,16 +311,16 @@ export function ChartTemplatesMenu(props: ChartTemplatesMenuProps) {
             <AddTemplateRow onAdd={addTemplate} />
             <MenuRow
               icon={<Save className="h-3.5 w-3.5" />}
-              label={activeName ? `Save "${activeName}"` : "Save template"}
+              label={activeName ? `保存“${activeName}”` : "保存模板"}
               disabled={!activeName || autosave}
               onClick={() => {
                 save.mutate({ name: activeName, content });
-                toast.success("Templates", `Saved "${activeName}"`);
+                toast.success("模板", `已保存“${activeName}”`);
               }}
             />
             <MenuRow
               icon={<Trash2 className="h-3.5 w-3.5" />}
-              label={manageMode ? "Done managing" : "Manage templates…"}
+              label={manageMode ? "完成管理" : "管理模板…"}
               onClick={() => setManageMode((v) => !v)}
             />
             <div className="my-1 border-t border-border" />

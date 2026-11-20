@@ -108,7 +108,7 @@ export function NewsOverlay({
               </p>
               <div className="space-y-1.5">
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-muted-foreground">Actual</span>
+                  <span className="text-muted-foreground">实际</span>
                   <span
                     className={cn("font-bold font-mono", isDark ? "text-white" : "text-gray-900")}
                   >
@@ -116,11 +116,11 @@ export function NewsOverlay({
                   </span>
                 </div>
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-muted-foreground">Forecast</span>
+                  <span className="text-muted-foreground">预测</span>
                   <span className="font-mono font-medium">{newsPopup.event.forecast || "—"}</span>
                 </div>
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-muted-foreground">Previous</span>
+                  <span className="text-muted-foreground">前值</span>
                   <span className="font-mono text-muted-foreground">
                     {newsPopup.event.previous || "—"}
                   </span>
@@ -161,10 +161,10 @@ export function NewsOverlay({
             ? "bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25"
             : "bg-secondary/60 text-muted-foreground border border-border hover:bg-secondary",
         )}
-        title="News overlay settings"
+        title="资讯叠加层设置"
       >
         <Newspaper className="h-3 w-3" />
-        News
+        资讯
         <Settings2 className="h-2.5 w-2.5 ml-0.5 opacity-60" />
       </button>
 

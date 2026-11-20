@@ -279,7 +279,7 @@ describe("orderFlow", () => {
     const r = orderFlow(longScenario());
     expect(r.hud.bias).toBe(1);
     const abs = r.markers.find((m) => m.text.startsWith("吸收"));
-    const entry = r.markers.find((m) => m.text === "LONG");
+    const entry = r.markers.find((m) => m.text === "做多");
     expect(abs).toBeDefined();
     expect(entry).toBeDefined();
     expect(abs!.time).toBeLessThan(entry!.time);
@@ -303,8 +303,8 @@ describe("orderFlow", () => {
 
   it("only uses closed bars: the entry bar alone as the live bar fires nothing", () => {
     const base = longScenario().slice(0, 182); // entry bar (182) cut off
-    expect(orderFlow(base).markers.some((m) => m.text === "LONG")).toBe(false);
-    expect(orderFlow(longScenario()).markers.some((m) => m.text === "LONG")).toBe(true);
+    expect(orderFlow(base).markers.some((m) => m.text === "做多")).toBe(false);
+    expect(orderFlow(longScenario()).markers.some((m) => m.text === "做多")).toBe(true);
   });
 
   it("never exceeds the daily trade limit on choppy data", () => {

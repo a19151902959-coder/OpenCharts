@@ -78,7 +78,7 @@ export function ReplayHUD({ accountId }: { accountId: string }) {
       {!isReplaying ? (
         <button
           onClick={handleStart}
-          title="Start Replay"
+          title="开始回放"
           className="p-0.5 rounded hover:bg-orange-500/20 text-orange-500"
         >
           <Play className="h-3.5 w-3.5 fill-current" />
@@ -86,7 +86,7 @@ export function ReplayHUD({ accountId }: { accountId: string }) {
       ) : replayPaused ? (
         <button
           onClick={handleResume}
-          title="Resume"
+          title="继续"
           className="p-0.5 rounded hover:bg-orange-500/20 text-orange-500"
         >
           <Play className="h-3.5 w-3.5 fill-current" />
@@ -94,7 +94,7 @@ export function ReplayHUD({ accountId }: { accountId: string }) {
       ) : (
         <button
           onClick={handlePause}
-          title="Pause"
+          title="暂停"
           className="p-0.5 rounded hover:bg-orange-500/20 text-orange-500"
         >
           <Pause className="h-3.5 w-3.5 fill-current" />
@@ -104,7 +104,7 @@ export function ReplayHUD({ accountId }: { accountId: string }) {
       {isReplaying && (
         <button
           onClick={handleStop}
-          title="Stop Replay"
+          title="停止回放"
           className="p-0.5 rounded hover:bg-red-500/20 text-red-400"
         >
           <Square className="h-3.5 w-3.5 fill-current" />

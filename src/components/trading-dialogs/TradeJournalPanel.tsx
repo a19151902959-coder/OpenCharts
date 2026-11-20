@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Star, Pencil, Trash2, Plus } from "lucide-react";
 
 const EMOTIONS = [
-  "Calm",
-  "Confident",
-  "Anxious",
-  "Greedy",
-  "Fearful",
-  "FOMO",
-  "Revenge",
-  "Bored",
+  "平静",
+  "自信",
+  "焦虑",
+  "贪婪",
+  "恐惧",
+  "害怕错过",
+  "报复交易",
+  "无聊",
 ] as const;
 
 interface JournalEntry {
@@ -150,29 +150,29 @@ export function TradeJournalPanel({
             <>
               <div className="grid grid-cols-3 gap-1">
                 <div className="col-span-2">
-                  <label className="text-[10px] text-muted-foreground">Symbol</label>
+                  <label className="text-[10px] text-muted-foreground">品种</label>
                   <input
                     value={symbolName}
                     onChange={(e) => setSymbolName(e.target.value)}
                     className="w-full mt-0.5 text-xs"
-                    placeholder="e.g. EURUSD"
+                    placeholder="如 EURUSD"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground">Side</label>
+                  <label className="text-[10px] text-muted-foreground">方向</label>
                   <select
                     value={side}
                     onChange={(e) => setSide(e.target.value as "BUY" | "SELL")}
                     className="w-full mt-0.5 text-xs"
                   >
-                    <option value="BUY">BUY</option>
-                    <option value="SELL">SELL</option>
+                    <option value="BUY">买入</option>
+                    <option value="SELL">卖出</option>
                   </select>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-1">
                 <div>
-                  <label className="text-[10px] text-muted-foreground">Entry</label>
+                  <label className="text-[10px] text-muted-foreground">入场价</label>
                   <input
                     type="number"
                     value={entryPrice}
@@ -182,7 +182,7 @@ export function TradeJournalPanel({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground">Exit</label>
+                  <label className="text-[10px] text-muted-foreground">出场</label>
                   <input
                     type="number"
                     value={exitPrice}
@@ -192,7 +192,7 @@ export function TradeJournalPanel({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground">P&L</label>
+                  <label className="text-[10px] text-muted-foreground">盈亏</label>
                   <input
                     type="number"
                     value={pnl}
@@ -245,7 +245,7 @@ export function TradeJournalPanel({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               className="w-full mt-0.5 text-xs"
-              placeholder="e.g. breakout, trend"
+              placeholder="如 突破、趋势"
             />
           </div>
           <div>
@@ -254,15 +254,15 @@ export function TradeJournalPanel({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full mt-0.5 text-xs min-h-[60px] resize-y"
-              placeholder="What happened? What did you learn?"
+              placeholder="发生了什么？学到了什么？"
             />
           </div>
           <div className="flex gap-1">
             <Button size="sm" variant="outline" className="text-[10px] h-6" onClick={resetForm}>
-              Cancel
+              取消
             </Button>
             <Button size="sm" className="text-[10px] h-6" onClick={handleSubmit}>
-              {editingId ? "Update" : "Save Entry"}
+              {editingId ? "更新" : "保存记录"}
             </Button>
           </div>
         </div>
@@ -272,7 +272,7 @@ export function TradeJournalPanel({
         {entries.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-xs gap-2">
             <BookOpen className="h-8 w-8 opacity-30" />
-            <span>No journal entries yet</span>
+            <span>暂无日志记录</span>
             <span className="text-[10px]">Click "New" to record your first trade</span>
           </div>
         ) : (
