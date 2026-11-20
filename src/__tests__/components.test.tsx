@@ -57,8 +57,8 @@ describe("OrderPanel", () => {
   it("renders the current bid and ask on the side buttons", () => {
     renderOrderPanel();
     // Prices are rendered through Intl, i.e. "50,005.00000".
-    expect(screen.getByRole("button", { name: /BUY\s+50,005/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /SELL\s+49,995/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /买入\s+50,005/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /卖出\s+49,995/ })).toBeInTheDocument();
   });
 
   it("refuses a limit order with no price and says why", async () => {
@@ -66,11 +66,11 @@ describe("OrderPanel", () => {
     const onConfirmOrder = vi.fn();
     renderOrderPanel({ onConfirmOrder });
 
-    await user.click(screen.getByRole("button", { name: "LIMIT" }));
-    await user.click(screen.getByRole("button", { name: /Buy .* BTCUSD/i }));
+    await user.click(screen.getByRole("button", { name: "限价" }));
+    await user.click(screen.getByRole("button", { name: /买入.*BTCUSD/ }));
 
     await waitFor(() => {
-      expect(toasts.list.some((t) => /Missing Price/i.test(t.title))).toBe(true);
+      expect(toasts.list.some((t) => /缺少价格/.test(t.title))).toBe(true);
     });
     expect(onConfirmOrder).not.toHaveBeenCalled();
   });
@@ -80,11 +80,11 @@ describe("OrderPanel", () => {
     const onConfirmOrder = vi.fn();
     renderOrderPanel({ onConfirmOrder });
 
-    await user.click(screen.getByRole("button", { name: "STOP" }));
-    await user.click(screen.getByRole("button", { name: /Buy .* BTCUSD/i }));
+    await user.click(screen.getByRole("button", { name: "止损单" }));
+    await user.click(screen.getByRole("button", { name: /买入.*BTCUSD/ }));
 
     await waitFor(() => {
-      expect(toasts.list.some((t) => /Stop Price/i.test(t.title))).toBe(true);
+      expect(toasts.list.some((t) => /缺少止损价/.test(t.title))).toBe(true);
     });
     expect(onConfirmOrder).not.toHaveBeenCalled();
   });
@@ -97,10 +97,10 @@ describe("OrderPanel", () => {
     const qty = screen.getByDisplayValue("0.1");
     await user.clear(qty);
     await user.type(qty, "0");
-    await user.click(screen.getByRole("button", { name: /Buy .* BTCUSD/i }));
+    await user.click(screen.getByRole("button", { name: /买入.*BTCUSD/ }));
 
     await waitFor(() => {
-      expect(toasts.list.some((t) => /Invalid Quantity/i.test(t.title))).toBe(true);
+      expect(toasts.list.some((t) => /数量无效/.test(t.title))).toBe(true);
     });
     expect(onConfirmOrder).not.toHaveBeenCalled();
   });
@@ -110,7 +110,7 @@ describe("OrderPanel", () => {
     const onConfirmOrder = vi.fn();
     renderOrderPanel({ onConfirmOrder });
 
-    await user.click(screen.getByRole("button", { name: /Buy .* BTCUSD/i }));
+    await user.click(screen.getByRole("button", { name: /买入.*BTCUSD/ }));
 
     await waitFor(() => expect(onConfirmOrder).toHaveBeenCalledTimes(1));
     const order = onConfirmOrder.mock.calls[0]![0];
@@ -120,14 +120,14 @@ describe("OrderPanel", () => {
 
   it("disables the submit button when no account is selected", () => {
     renderOrderPanel({ accountId: null });
-    expect(screen.getByRole("button", { name: /Buy .* BTCUSD/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /买入.*BTCUSD/ })).toBeDisabled();
   });
 
   it("blocks trading while the feed is down", () => {
     renderOrderPanel({ isFeedConnected: false });
     // The panel swaps the ticket for a disconnected banner rather than
     // offering a button that would fail.
-    expect(screen.queryByRole("button", { name: /Buy .* BTCUSD/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /买入.*BTCUSD/ })).toBeNull();
   });
 
   it("applies a volume preset to the quantity field", async () => {
@@ -161,13 +161,13 @@ describe("PositionsTable", () => {
   it("lists an open position with its side and size", () => {
     render(<PositionsTable positions={[makePosition()]} onClose={vi.fn()} />);
     expect(screen.getByText("BTCUSD")).toBeInTheDocument();
-    expect(screen.getByText("LONG")).toBeInTheDocument();
+    expect(screen.getByText("做多")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
   });
 
   it("shows the empty state with no positions", () => {
     render(<PositionsTable positions={[]} onClose={vi.fn()} />);
-    expect(screen.getByText(/No open positions/i)).toBeInTheDocument();
+    expect(screen.getByText(/暂无持仓/)).toBeInTheDocument();
   });
 
   it("closes a position through the callback", async () => {
@@ -175,7 +175,7 @@ describe("PositionsTable", () => {
     const onClose = vi.fn();
     render(<PositionsTable positions={[makePosition()]} onClose={onClose} />);
 
-    await user.click(screen.getByRole("button", { name: "Close" }));
+    await user.click(screen.getByRole("button", { name: "平仓" }));
     expect(onClose).toHaveBeenCalledWith("pos-1");
   });
 
@@ -190,12 +190,12 @@ describe("PositionsTable", () => {
       />,
     );
 
-    await user.click(screen.getByTitle(/partial close/i));
-    await user.type(screen.getByPlaceholderText("Max 2"), "5");
-    await user.click(screen.getByRole("button", { name: "Go" }));
+    await user.click(screen.getByTitle(/部分平仓/));
+    await user.type(screen.getByPlaceholderText("最大 2"), "5");
+    await user.click(screen.getByRole("button", { name: "确认" }));
 
     await waitFor(() => {
-      expect(toasts.list.some((t) => /Quantity Too Large/i.test(t.title))).toBe(true);
+      expect(toasts.list.some((t) => /数量过大/.test(t.title))).toBe(true);
     });
     expect(onPartialClose).not.toHaveBeenCalled();
   });
@@ -211,9 +211,9 @@ describe("PositionsTable", () => {
       />,
     );
 
-    await user.click(screen.getByTitle(/partial close/i));
-    await user.type(screen.getByPlaceholderText("Max 2"), "1");
-    await user.click(screen.getByRole("button", { name: "Go" }));
+    await user.click(screen.getByTitle(/部分平仓/));
+    await user.type(screen.getByPlaceholderText("最大 2"), "1");
+    await user.click(screen.getByRole("button", { name: "确认" }));
 
     expect(onPartialClose).toHaveBeenCalledWith("pos-1", 1);
   });

@@ -99,23 +99,23 @@ export function OrderConfirmDialog({
               ) : (
                 <TrendingDown className="h-4 w-4 text-sell" />
               )}
-              Confirm {order.side} Order
+              确认{order.side === "BUY" ? "买入" : "卖出"}订单
             </h3>
           </div>
 
           <div className="px-5 py-4 space-y-2 text-sm">
-            <Row label="Symbol" value={order.symbol} bold />
+            <Row label="品种" value={order.symbol} bold />
             <Row
-              label="Side"
-              value={order.side}
+              label="方向"
+              value={order.side === "BUY" ? "买入" : "卖出"}
               valueClass={order.side === "BUY" ? "text-buy" : "text-sell"}
             />
-            <Row label="Type" value={order.type} />
-            <Row label="Volume" value={formatQty(order.quantity)} />
-            {executionPrice && <Row label="Price" value={formatNumber(executionPrice, 5)} />}
+            <Row label="类型" value={order.type === "MARKET" ? "市价" : order.type === "LIMIT" ? "限价" : order.type === "STOP" ? "止损单" : order.type} />
+            <Row label="数量" value={formatQty(order.quantity)} />
+            {executionPrice && <Row label="价格" value={formatNumber(executionPrice, 5)} />}
             {order.takeProfit && (
               <Row
-                label="Take Profit"
+                label="止盈"
                 value={formatNumber(order.takeProfit, 5)}
                 extra={
                   tpPnl !== null ? `(${tpPnl >= 0 ? "+" : ""}${formatCurrency(tpPnl)})` : undefined
@@ -125,7 +125,7 @@ export function OrderConfirmDialog({
             )}
             {order.stopLoss && (
               <Row
-                label="Stop Loss"
+                label="止损"
                 value={formatNumber(order.stopLoss, 5)}
                 extra={
                   slPnl !== null ? `(${slPnl >= 0 ? "+" : ""}${formatCurrency(slPnl)})` : undefined
@@ -146,10 +146,10 @@ export function OrderConfirmDialog({
             ) : (
               <>
                 {marginRequired !== null && (
-                  <Row label="Margin Required" value={formatCurrency(marginRequired)} />
+                  <Row label="所需保证金" value={formatCurrency(marginRequired)} />
                 )}
                 {commission !== null && (
-                  <Row label="Commission" value={formatCurrency(commission)} />
+                  <Row label="手续费" value={formatCurrency(commission)} />
                 )}
               </>
             )}
@@ -162,7 +162,7 @@ export function OrderConfirmDialog({
 
           <div className="px-5 py-3 border-t border-border/40 flex gap-2">
             <Button variant="outline" className="flex-1" onClick={onCancel}>
-              Cancel
+              取消
             </Button>
             <Button
               variant={order.side === "BUY" ? "buy" : "sell"}
@@ -171,7 +171,7 @@ export function OrderConfirmDialog({
               loading={loading}
               disabled={loading}
             >
-              {loading ? "Placing..." : `Confirm ${order.side}`}
+              {loading ? "下单中…" : `确认${order.side === "BUY" ? "买入" : "卖出"}`}
             </Button>
           </div>
         </div>

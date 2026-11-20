@@ -68,23 +68,23 @@ export function OrderModifyDialog({ order, onClose, onSaved, tick }: OrderModify
       if (sl === "" && order.stopLoss != null) modifications.stopLoss = null;
 
       if (Object.keys(modifications).length === 0) {
-        toast.info("No Changes", "No modifications to apply");
+        toast.info("没有修改", "没有可应用的修改");
         setSaving(false);
         return;
       }
 
       await api.modifyOrder(order.id, modifications);
-      toast.success("Order Modified", "Pending order has been updated");
+      toast.success("订单已修改", "待成交订单已更新");
       onSaved();
     } catch (err: unknown) {
       const e = err as { code?: string; message?: string };
       if (e?.code === "REQUEST_TIMEOUT") {
         toast.error(
-          "Request Timed Out",
-          "The server didn't respond in time. Check your connection and try again.",
+          "请求超时",
+          "服务器未及时响应，请检查网络后重试",
         );
       } else {
-        toast.error("Modify Failed", e?.message || "Could not modify order");
+        toast.error("修改失败", e?.message || "无法修改订单");
       }
     } finally {
       setSaving(false);
@@ -114,7 +114,7 @@ export function OrderModifyDialog({ order, onClose, onSaved, tick }: OrderModify
           <div className="px-5 py-4 space-y-3">
             <div>
               <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                Price
+                价格
               </label>
               <input
                 type="number"
@@ -140,7 +140,7 @@ export function OrderModifyDialog({ order, onClose, onSaved, tick }: OrderModify
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                  Take Profit
+                  止盈
                 </label>
                 <input
                   type="number"
@@ -152,7 +152,7 @@ export function OrderModifyDialog({ order, onClose, onSaved, tick }: OrderModify
               </div>
               <div>
                 <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                  Stop Loss
+                  止损
                 </label>
                 <input
                   type="number"
@@ -178,7 +178,7 @@ export function OrderModifyDialog({ order, onClose, onSaved, tick }: OrderModify
 
           <div className="px-5 py-3 border-t border-border/40 flex gap-2">
             <Button variant="outline" className="flex-1" onClick={onClose}>
-              Cancel
+              取消
             </Button>
             <Button
               variant="default"
@@ -187,7 +187,7 @@ export function OrderModifyDialog({ order, onClose, onSaved, tick }: OrderModify
               disabled={saving}
               loading={saving}
             >
-              {saving ? "Saving..." : "Save Changes"}
+              {saving ? "保存中…" : "保存修改"}
             </Button>
           </div>
         </div>

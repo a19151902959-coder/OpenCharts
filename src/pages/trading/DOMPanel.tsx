@@ -94,7 +94,7 @@ function SimulatedDOMPanel({
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-secondary">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Depth of Market
+          市场深度
         </h3>
         <span className="text-xs font-semibold">{symbol}</span>
       </div>
@@ -102,9 +102,9 @@ function SimulatedDOMPanel({
         <table className="w-full text-[11px]">
           <thead className="sticky top-0 bg-card z-10">
             <tr>
-              <th className="text-right w-[30%]">Bid Size</th>
-              <th className="text-center w-[40%]">Price</th>
-              <th className="text-left w-[30%]">Ask Size</th>
+              <th className="text-right w-[30%]">买量</th>
+              <th className="text-center w-[40%]">价格</th>
+              <th className="text-left w-[30%]">卖量</th>
             </tr>
           </thead>
           <tbody>

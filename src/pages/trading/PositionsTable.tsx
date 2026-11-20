@@ -46,7 +46,7 @@ export function PositionsTable({
   if (positions.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
-        No open positions
+        暂无持仓
       </div>
     );
   }
@@ -56,13 +56,13 @@ export function PositionsTable({
     // Explain the rejection instead of swallowing the click: an out-of-range
     // value previously looked identical to a successful partial close.
     if (!Number.isFinite(qty) || qty <= 0) {
-      toast.warning("Invalid Quantity", "Enter a positive quantity to close");
+      toast.warning("数量无效", "请输入要平仓的正数数量");
       return;
     }
     if (qty >= maxQty) {
       toast.warning(
-        "Quantity Too Large",
-        `Enter less than ${maxQty} — use Close to exit the whole position`,
+        "数量过大",
+        `请输入小于 ${maxQty} 的数量——全部平仓请用「平仓」`,
       );
       return;
     }
@@ -75,18 +75,18 @@ export function PositionsTable({
     <table className="w-full text-[11px]">
       <thead className="sticky top-0 bg-card z-10">
         <tr>
-          <th>Symbol</th>
-          <th>Side</th>
-          <th>Qty</th>
-          <th>Entry</th>
-          <th>Current</th>
-          <th>P&L</th>
-          {showLiq && <th>Liq.</th>}
-          {showFunding && <th title="Funding since the position opened, as reported by Hyperliquid">Funding</th>}
-          {showMargin && <th>Margin</th>}
-          <th>SL</th>
-          <th>TP</th>
-          <th>Time</th>
+          <th>品种</th>
+          <th>方向</th>
+          <th>数量</th>
+          <th>入场价</th>
+          <th>现价</th>
+          <th>盈亏</th>
+          {showLiq && <th>强平价</th>}
+          {showFunding && <th title="持仓开仓以来的资金费（Hyperliquid 上报）">资金费</th>}
+          {showMargin && <th>保证金</th>}
+          <th>止损</th>
+          <th>止盈</th>
+          <th>时间</th>
           <th></th>
         </tr>
       </thead>
@@ -106,7 +106,7 @@ export function PositionsTable({
             tabIndex={onSelectSymbol ? 0 : undefined}
           >
             <td className="font-semibold">{p.symbolName}</td>
-            <td className={p.side === "LONG" ? "text-buy" : "text-sell"}>{p.side}</td>
+            <td className={p.side === "LONG" ? "text-buy" : "text-sell"}>{p.side === "LONG" ? "做多" : p.side === "SHORT" ? "做空" : p.side}</td>
             <td className="font-mono">{p.quantity}</td>
             <td className="font-mono">{formatNumber(p.entryPrice, 5)}</td>
             <td className="font-mono">{p.currentPrice ? formatNumber(p.currentPrice, 5) : "--"}</td>
@@ -145,7 +145,7 @@ export function PositionsTable({
                     value={partialQty}
                     onChange={(e) => setPartialQty(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
-                    placeholder={`Max ${p.quantity}`}
+                    placeholder={`最大 ${p.quantity}`}
                     min={0}
                     max={p.quantity}
                     step="any"
@@ -166,7 +166,7 @@ export function PositionsTable({
                     }}
                     className="px-1 py-0.5 text-[9px] rounded bg-warning/20 text-warning hover:bg-warning/30"
                   >
-                    Go
+                    确认
                   </button>
                   <button
                     onClick={(e) => {
@@ -189,7 +189,7 @@ export function PositionsTable({
                       }}
                       className="px-1.5 py-0.5 text-[10px] rounded bg-accent/20 text-accent hover:bg-accent/30"
                     >
-                      Modify
+                      修改
                     </button>
                   )}
                   {onPartialClose && (
@@ -200,9 +200,9 @@ export function PositionsTable({
                         setPartialQty("");
                       }}
                       className="px-1.5 py-0.5 text-[10px] rounded bg-warning/20 text-warning hover:bg-warning/30 flex items-center gap-0.5"
-                      title="Partial Close"
+                      title="部分平仓"
                     >
-                      <Scissors className="h-2.5 w-2.5" /> Partial
+                      <Scissors className="h-2.5 w-2.5" /> 部分
                     </button>
                   )}
                   <button
@@ -212,7 +212,7 @@ export function PositionsTable({
                     }}
                     className="px-1.5 py-0.5 text-[10px] rounded bg-destructive/20 text-destructive hover:bg-destructive/30"
                   >
-                    Close
+                    平仓
                   </button>
                 </div>
               )}

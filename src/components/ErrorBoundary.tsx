@@ -92,16 +92,16 @@ export class ErrorBoundary extends Component<Props, State> {
           <Card className="max-w-md w-full">
             <CardContent className="pt-6 text-center space-y-4">
               <AlertTriangle className="h-12 w-12 text-warning mx-auto" />
-              <h2 className="text-lg font-semibold">Something went wrong</h2>
+              <h2 className="text-lg font-semibold">出问题了</h2>
               <p className="text-sm text-muted-foreground">
-                {this.state.error?.message || "An unexpected error occurred"}
+                {this.state.error?.message || "发生未知错误"}
               </p>
               <div className="flex gap-2 justify-center">
                 <Button variant="outline" onClick={this.handleReset}>
                   <RefreshCw className="h-4 w-4 mr-1" />
-                  Try Again
+                  重试
                 </Button>
-                <Button onClick={this.handleReload}>Reload Page</Button>
+                <Button onClick={this.handleReload}>重新加载页面</Button>
               </div>
             </CardContent>
           </Card>

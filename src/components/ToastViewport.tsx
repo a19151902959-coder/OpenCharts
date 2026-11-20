@@ -103,7 +103,7 @@ export function ToastViewport() {
   return (
     <div
       className="pointer-events-none fixed bottom-4 right-4 z-[1000] flex w-[min(360px,calc(100vw-2rem))] flex-col gap-2"
-      aria-label="Notifications"
+      aria-label="通知"
     >
       {toasts.map((t) => {
         const Icon = ICON[t.type];
@@ -133,7 +133,7 @@ export function ToastViewport() {
               type="button"
               onClick={() => dismiss(t.id)}
               className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
-              aria-label="Dismiss notification"
+              aria-label="关闭通知"
             >
               <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>

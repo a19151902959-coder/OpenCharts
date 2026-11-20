@@ -106,7 +106,7 @@ function TradeSection({
         <>
           <MenuItem
             icon={<ArrowUpFromLine className="h-3.5 w-3.5" />}
-            label={`Buy 1 ${symbol} @ ${p} ${buyOrderType(price, tick.ask).toLowerCase()}`}
+            label={`买入 1 ${symbol} @ ${p} ${buyOrderType(price, tick.ask) === "LIMIT" ? "限价" : "止损"}`}
             onClick={() => {
               onQuickOrder("BUY", buyOrderType(price, tick.ask), price);
               onClose();
@@ -114,7 +114,7 @@ function TradeSection({
           />
           <MenuItem
             icon={<ArrowDownToLine className="h-3.5 w-3.5" />}
-            label={`Sell 1 ${symbol} @ ${p} ${sellOrderType(price, tick.bid).toLowerCase()}`}
+            label={`卖出 1 ${symbol} @ ${p} ${sellOrderType(price, tick.bid) === "LIMIT" ? "限价" : "止损"}`}
             onClick={() => {
               onQuickOrder("SELL", sellOrderType(price, tick.bid), price);
               onClose();
@@ -183,7 +183,7 @@ export function ChartContextMenu(props: ChartContextMenuProps) {
       >
         <MenuItem
           icon={<RotateCcw className="h-3.5 w-3.5" />}
-          label="Reset chart view"
+          label="重置图表视图"
           onClick={() => {
             onResetView();
             onClose();
@@ -194,7 +194,7 @@ export function ChartContextMenu(props: ChartContextMenuProps) {
             <Separator />
             <MenuItem
               icon={<ClipboardCopy className="h-3.5 w-3.5" />}
-              label={`Copy price ${price.toFixed(pipDigits)}`}
+              label={`复制价格 ${price.toFixed(pipDigits)}`}
               onClick={() => {
                 onCopyPrice(price);
                 onClose();
@@ -207,7 +207,7 @@ export function ChartContextMenu(props: ChartContextMenuProps) {
         <Separator />
         <MenuItem
           icon={<ListTree className="h-3.5 w-3.5" />}
-          label="Object tree"
+          label="对象树"
           onClick={() => {
             onOpenObjectTree();
             onClose();
@@ -217,7 +217,7 @@ export function ChartContextMenu(props: ChartContextMenuProps) {
         {drawingsCount > 0 && onRemoveAllDrawings && (
           <MenuItem
             icon={<Trash2 className="h-3.5 w-3.5" />}
-            label={`Remove ${drawingsCount} drawing${drawingsCount === 1 ? "" : "s"}`}
+            label={`删除 ${drawingsCount} 条画线`}
             danger
             onClick={() => {
               onRemoveAllDrawings();
@@ -228,7 +228,7 @@ export function ChartContextMenu(props: ChartContextMenuProps) {
         {indicatorsCount > 0 && onClearIndicators && (
           <MenuItem
             icon={<Trash2 className="h-3.5 w-3.5" />}
-            label={`Remove ${indicatorsCount} indicator${indicatorsCount === 1 ? "" : "s"}`}
+            label={`删除 ${indicatorsCount} 个指标`}
             danger
             onClick={() => {
               onClearIndicators();
@@ -239,7 +239,7 @@ export function ChartContextMenu(props: ChartContextMenuProps) {
         <Separator />
         <MenuItem
           icon={<Settings className="h-3.5 w-3.5" />}
-          label="Chart Settings…"
+          label="图表设置…"
           onClick={() => {
             onOpenSettings();
             onClose();

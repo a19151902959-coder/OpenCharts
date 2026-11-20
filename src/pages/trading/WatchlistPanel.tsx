@@ -73,7 +73,7 @@ function GenericWatchlistPanel({
   }, []);
 
   const categories = useMemo(() => {
-    const cats = new Set(symbols.map((s) => s.category || "Other"));
+    const cats = new Set(symbols.map((s) => s.category || "其他"));
     return Array.from(cats).sort();
   }, [symbols]);
 
@@ -99,10 +99,10 @@ function GenericWatchlistPanel({
     <div className="flex flex-col h-full">
       <div className="px-3 py-2 border-b border-border bg-secondary">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-          Watchlist
+          自选列表
         </h3>
         <input
-          placeholder="Search..."
+          placeholder="搜索…"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="w-full text-xs"
@@ -116,7 +116,7 @@ function GenericWatchlistPanel({
             !selectedCat ? "bg-primary text-primary-foreground" : "hover:bg-secondary",
           )}
         >
-          All
+          全部
         </button>
         <button
           onClick={() => setSelectedCat("★")}
@@ -149,11 +149,11 @@ function GenericWatchlistPanel({
           const isFav = favorites.has(s.name);
           const handleQuickTrade = (side: "BUY" | "SELL") => {
             if (!isFeedConnected) {
-              toast.warning("No Data Feed", "Cannot trade while disconnected");
+              toast.warning("无行情数据", "未连接行情，无法交易");
               return;
             }
             if (!accountId) {
-              toast.warning("No Account", "Select an account first");
+              toast.warning("未选择账户", "请先选择账户");
               return;
             }
             placeOrder.mutate(
@@ -165,9 +165,9 @@ function GenericWatchlistPanel({
                 quantity: 0.1,
               },
               {
-                onSuccess: () => toast.success("Quick Trade", `${side} 0.1 ${s.name}`),
+                onSuccess: () => toast.success("快速交易", `${side === "BUY" ? "买入" : "卖出"} 0.1 ${s.name}`),
                 onError: (err: unknown) =>
-                  toast.error("Trade Failed", (err as { message?: string })?.message || "Failed"),
+                  toast.error("交易失败", (err as { message?: string })?.message || "失败"),
               },
             );
           };

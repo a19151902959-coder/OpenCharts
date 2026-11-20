@@ -88,25 +88,25 @@ export function useStaleData(): boolean {
 // ── Connection Indicator Component ──────────────────────
 const stateConfig = {
   connected: {
-    label: "Connected",
+    label: "已连接",
     icon: Wifi,
     color: "text-success",
     dot: "bg-success",
   },
   connecting: {
-    label: "Connecting…",
+    label: "连接中…",
     icon: Loader2,
     color: "text-warning",
     dot: "bg-warning",
   },
   reconnecting: {
-    label: "Reconnecting…",
+    label: "重新连接中…",
     icon: Loader2,
     color: "text-warning",
     dot: "bg-warning",
   },
   disconnected: {
-    label: "Offline",
+    label: "离线",
     icon: WifiOff,
     color: "text-destructive",
     dot: "bg-destructive",
@@ -184,7 +184,7 @@ export function DisconnectedTradingBanner({ className }: { className?: string })
     >
       <div className="flex items-center justify-center gap-1.5 text-destructive text-xs font-semibold">
         <WifiOff className="h-3.5 w-3.5" />
-        Data Feed Disconnected
+        行情已断开
       </div>
       <p className="text-[10px] text-muted-foreground mt-0.5">
         Trading is disabled until the connection is restored

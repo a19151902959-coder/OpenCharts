@@ -17,11 +17,11 @@ import { cn } from "../../lib/utils.ts";
 import type { DrawingLine } from "./constants.ts";
 
 const TYPE_META: Record<string, { icon: LucideIcon; label: string }> = {
-  trendline: { icon: TrendingUp, label: "Trendline" },
-  horizontal: { icon: Minus, label: "Horizontal" },
-  fibonacci: { icon: Layers, label: "Fibonacci" },
-  rectangle: { icon: Square, label: "Rectangle" },
-  position: { icon: TrendingUp, label: "Position" },
+  trendline: { icon: TrendingUp, label: "趋势线" },
+  horizontal: { icon: Minus, label: "水平线" },
+  fibonacci: { icon: Layers, label: "斐波那契" },
+  rectangle: { icon: Square, label: "矩形" },
+  position: { icon: TrendingUp, label: "仓位" },
 };
 
 export interface ObjectTreePanelProps {
@@ -103,26 +103,26 @@ function ObjectTreeRow({
         </span>
       </button>
       <div className="hidden group-hover:flex items-center">
-        <RowIconButton title="Bring to front" onClick={() => onReorder(d, "front")}>
+        <RowIconButton title="置于顶层" onClick={() => onReorder(d, "front")}>
           <ArrowUpToLine className="h-3 w-3" />
         </RowIconButton>
-        <RowIconButton title="Send to back" onClick={() => onReorder(d, "back")}>
+        <RowIconButton title="置于底层" onClick={() => onReorder(d, "back")}>
           <ArrowDownToLine className="h-3 w-3" />
         </RowIconButton>
       </div>
       <RowIconButton
-        title={d.hidden ? "Show" : "Hide"}
+        title={d.hidden ? "显示" : "隐藏"}
         onClick={() => onUpdate({ ...d, hidden: !d.hidden })}
       >
         {d.hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
       </RowIconButton>
       <RowIconButton
-        title={d.locked ? "Unlock" : "Lock"}
+        title={d.locked ? "解锁" : "锁定"}
         onClick={() => onUpdate({ ...d, locked: !d.locked })}
       >
         {d.locked ? <Lock className="h-3 w-3" /> : <LockOpen className="h-3 w-3" />}
       </RowIconButton>
-      <RowIconButton title="Delete" onClick={() => onRemove(d.id)}>
+      <RowIconButton title="删除" onClick={() => onRemove(d.id)}>
         <Trash2 className="h-3 w-3" />
       </RowIconButton>
     </div>
@@ -144,7 +144,7 @@ export function ObjectTreePanel({
   return (
     <div className="absolute top-2 right-2 bottom-10 z-20 w-60 flex flex-col rounded-lg bg-card border border-border shadow-xl">
       <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-border">
-        <span className="text-xs font-semibold">Objects ({drawings.length})</span>
+        <span className="text-xs font-semibold">对象（{drawings.length}）</span>
         <button
           type="button"
           onClick={onClose}
@@ -155,7 +155,7 @@ export function ObjectTreePanel({
       </div>
       <div className="flex-1 overflow-y-auto p-1 space-y-0.5">
         {drawings.length === 0 ? (
-          <div className="px-2 py-6 text-center text-xs text-muted-foreground">No drawings yet</div>
+          <div className="px-2 py-6 text-center text-xs text-muted-foreground">暂无画线</div>
         ) : (
           [...drawings]
             .reverse()

@@ -137,10 +137,10 @@ describe("positions table: exchange detail", () => {
     const onClose = vi.fn();
     const onPartial = vi.fn();
     render(<PositionsTable positions={[base]} onClose={onClose} onPartialClose={onPartial} />);
-    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    await userEvent.click(screen.getByRole("button", { name: "平仓" }));
     expect(onClose).toHaveBeenCalledWith("BTC");
-    await userEvent.click(screen.getByRole("button", { name: /partial/i }));
-    await userEvent.type(screen.getByPlaceholderText(/max 0\.5/i), "0.1{Enter}");
+    await userEvent.click(screen.getByRole("button", { name: /部分/i }));
+    await userEvent.type(screen.getByPlaceholderText(/最大 0\.5/), "0.1{Enter}");
     expect(onPartial).toHaveBeenCalledWith("BTC", 0.1);
   });
 });
