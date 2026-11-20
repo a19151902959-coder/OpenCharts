@@ -38,7 +38,11 @@ import { CrosshairHighlightPrimitive } from "../../lib/chart-plugins/highlight-b
 import { SessionBreaks } from "../../lib/chart-plugins/session-breaks/session-breaks.ts";
 import { SessionHighlighting } from "../../lib/chart-plugins/session-highlighting/session-highlighting.ts";
 import { TooltipPrimitive } from "../../lib/chart-plugins/tooltip/tooltip.ts";
-import type { IndicatorType } from "../../lib/indicators.ts";
+import {
+  quantEdge,
+  type IndicatorType,
+  type QuantEdgeResult,
+} from "../../lib/indicators.ts";
 import { cn } from "../../lib/utils.ts";
 import { api } from "../../services/api.ts";
 import { queryKeys } from "../../services/queries.ts";
@@ -72,6 +76,7 @@ import {
   formatCountdown,
   getCandleBucketTime,
   getMinMove,
+  toIndicatorCandles,
   toUnixMs,
   toUnixSeconds,
 } from "./utils.ts";
@@ -934,6 +939,39 @@ function BidAskRow({ tick, pipDigits }: { tick: TickData; pipDigits: number }) {
   );
 }
 
+// Quant-Edge status panel (Pine HUD, bottom-right corner). Rendered in
+// React, not in a chart primitive — the values come from quantEdge() and are
+// passed down from ChartPanel so the panel and the chart can never disagree.
+function QuantEdgeHudPanel({ hud }: { hud: QuantEdgeResult["hud"] }) {
+  const smcText =
+    hud.smcTrend === 1 ? "多头结构 ▲" : hud.smcTrend === -1 ? "空头结构 ▼" : "盘整中";
+  const smcColor =
+    hud.smcTrend === 1 ? "text-[#00ff00]" : hud.smcTrend === -1 ? "text-[#ff1744]" : "text-white/70";
+  return (
+    <div className="absolute bottom-2 right-2 z-20 pointer-events-none rounded-md border border-white/10 bg-black/70 px-2 py-1.5 text-[10px] font-mono shadow-lg">
+      <div className="text-white font-semibold">Quant-Edge</div>
+      <div className="grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 mt-0.5">
+        <span className="text-white/50">SMC 结构</span>
+        <span className={smcColor}>{smcText}</span>
+        <span className="text-white/50">大趋势 (EMA200)</span>
+        <span className={hud.isBull ? "text-[#00ff00]" : "text-[#ffa500]"}>
+          {hud.isBull ? "牛市区域" : "熊市区域"}
+        </span>
+        <span className="text-white/50">RSI(14) / RSI(2)</span>
+        <span className="text-white/90">
+          {hud.rsi14 !== null ? hud.rsi14.toFixed(1) : "—"}
+          {" / "}
+          {hud.rsi2 !== null ? hud.rsi2.toFixed(1) : "—"}
+        </span>
+        <span className="text-white/50">ATR 止损参考</span>
+        <span className="text-[#ffd60a]">
+          {hud.atrStop !== null ? hud.atrStop.toFixed(2) : "—"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // Symbol / timeframe / OHLCV / countdown header in the chart's top-left corner.
 // Extracted so the visibility branching doesn't inflate ChartPanel's CC.
 function ChartLegendHeader({
@@ -1321,6 +1359,15 @@ export function ChartPanel({
   }, [historicalExtra, candles, selectedSymbol, timeframe]);
   const { chartData, volumeData } = useChartData(allCandles, colors);
 
+  // ── Quant-Edge (TypeScript port of the Pine indicator) ─────────
+  // Computed from the same candles as the chart so the HUD and the markers
+  // always agree with the rendered lines. Only computed while the indicator
+  // is active — it is the heaviest indicator in the registry.
+  const quantEdgeResult: QuantEdgeResult | null = useMemo(() => {
+    if (!activeIndicators.includes("QUANTEDGE") || chartData.length === 0) return null;
+    return quantEdge(toIndicatorCandles(chartData));
+  }, [activeIndicators, chartData]);
+
   const {
     newsConfig,
     setNewsConfig,
@@ -1420,18 +1467,28 @@ export function ChartPanel({
 
   useIndicators(chartRef, candleSeriesRef, chartData, activeIndicators, isDark);
 
-  // ── Replay trade event markers ─────────────────────────────
+  // ── Candle-series markers (single owner of setMarkers) ───────
+  // Replay trade events AND Quant-Edge markers (BUY/SELL/BOS/CHoCH/抄底/
+  // 逃顶) share one setMarkers() call: lightweight-charts keeps exactly one
+  // marker set per series, so a second caller would clobber the first.
   useEffect(() => {
     const series = candleSeriesRef.current;
     if (!series) return;
-    if (!replayTradeEvents || replayTradeEvents.length === 0) {
-      series.setMarkers([]);
-      return;
-    }
     const markers: SeriesMarker<Time>[] = [];
-    for (const ev of replayTradeEvents) {
+    for (const ev of replayTradeEvents ?? []) {
       const marker = buildReplayMarker(ev, timeframe);
       if (marker) markers.push(marker);
+    }
+    if (quantEdgeResult) {
+      for (const m of quantEdgeResult.markers) {
+        markers.push({
+          time: m.time as Time,
+          position: m.position,
+          color: m.color,
+          shape: m.shape,
+          text: m.text,
+        });
+      }
     }
     // lightweight-charts requires markers sorted by time ascending
     markers.sort((a, b) => (a.time as number) - (b.time as number));
@@ -1439,7 +1496,7 @@ export function ChartPanel({
     return () => {
       series.setMarkers([]);
     };
-  }, [replayTradeEvents, timeframe]);
+  }, [replayTradeEvents, timeframe, quantEdgeResult]);
 
   // ── Candle close countdown timer ───────────────────────────
   // Daily and weekly bars get no countdown; that is decided when rendering the
@@ -1992,6 +2049,9 @@ export function ChartPanel({
         showOhlcLegend={chartPrefs.showOhlcLegend}
         showCountdown={chartPrefs.showCountdown}
       />
+
+      {/* Quant-Edge status panel (bottom-right, Pine HUD) */}
+      {quantEdgeResult && <QuantEdgeHudPanel hud={quantEdgeResult.hud} />}
 
       {/* Drag-to-edit tooltip */}
       {dragPrice && (

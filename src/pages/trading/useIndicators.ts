@@ -10,9 +10,11 @@ import {
   atr,
   stochastic,
   vwap,
+  quantEdge,
   INDICATOR_REGISTRY,
   type IndicatorType,
 } from "../../lib/indicators.ts";
+import { FvgBoxesPrimitive } from "../../lib/chart-plugins/fvg-boxes/fvg-boxes.ts";
 import { toIndicatorCandles } from "./utils.ts";
 import { CHART_COLORS } from "./constants.ts";
 
@@ -26,12 +28,19 @@ export function useIndicators(
   const indicatorSeriesRef = useRef<Map<string, ISeriesApi<"Line"> | ISeriesApi<"Histogram">>>(
     new Map(),
   );
+  // Quant-Edge FVG boxes are drawn by a series primitive, not a series, so
+  // they need their own ref. Attach/detach is always guarded: a primitive
+  // failure must never throw out of chart teardown (removeChild fix).
+  const fvgPrimitiveRef = useRef<FvgBoxesPrimitive | null>(null);
   const colors = isDark ? CHART_COLORS.dark : CHART_COLORS.light;
 
   useEffect(() => {
     if (!chartRef.current || !candleSeriesRef.current || chartData.length === 0) return;
 
     const chart = chartRef.current;
+    // Capture the series for the cleanup closure (lint: refs may change by
+    // the time cleanup runs).
+    const candleSeries = candleSeriesRef.current;
     const indCandles = toIndicatorCandles(chartData);
 
     // Remove old indicator series
@@ -43,6 +52,16 @@ export function useIndicators(
       }
     }
     indicatorSeriesRef.current.clear();
+
+    // Detach the old FVG primitive (if any) before re-attaching a fresh one.
+    if (fvgPrimitiveRef.current) {
+      try {
+        candleSeries.detachPrimitive(fvgPrimitiveRef.current);
+      } catch {
+        /* already detached */
+      }
+      fvgPrimitiveRef.current = null;
+    }
 
     for (const type of activeIndicators) {
       const config = INDICATOR_REGISTRY.find((r) => r.type === type);
@@ -196,8 +215,83 @@ export function useIndicators(
           indicatorSeriesRef.current.set("VWAP", s);
           break;
         }
+        case "QUANTEDGE": {
+          // TypeScript port of Pine "Quant-Edge 终极全能手机版" — see
+          // quantEdge() in lib/indicators.ts and docs/quant-edge.pine.
+          // Markers (BUY/SELL/BOS/CHoCH/抄底/逃顶) are NOT set here:
+          // ChartPanel owns candle-series markers (replay trade markers) and
+          // merges Quant-Edge markers into the same setMarkers() call, so
+          // setting them here would be clobbered on every replay-effect run.
+          const qe = quantEdge(
+            indCandles,
+            config.defaultParams.swingLen ?? 5,
+            config.defaultParams.dcLen ?? 20,
+          );
+
+          // EMA200 — Pine colours it lime in a bull trend, orange in a bear
+          // trend. A lightweight-charts line has one colour, so it takes the
+          // current trend's colour (lime bull / orange bear).
+          const ema200 = chart.addLineSeries({
+            color: qe.hud.isBull ? "#00ff00" : "#ffa500",
+            lineWidth: 2,
+            priceScaleId: "right",
+          });
+          ema200.setData(qe.ema200.map((p) => ({ time: p.time as Time, value: p.value })));
+          indicatorSeriesRef.current.set("QUANTEDGE-EMA200", ema200);
+
+          // Donchian 20 channel — Pine plots the [1]-shifted highest/lowest
+          // of the prior 20 bars; mid is a dotted grey line (Pine uses
+          // circles, which lightweight-charts line series cannot draw).
+          const dcUpper = chart.addLineSeries({
+            color: "rgba(0, 128, 128, 0.7)",
+            lineWidth: 1,
+            priceScaleId: "right",
+          });
+          dcUpper.setData(qe.donchianUpper.map((p) => ({ time: p.time as Time, value: p.value })));
+          indicatorSeriesRef.current.set("QUANTEDGE-DC-UPPER", dcUpper);
+          const dcLower = chart.addLineSeries({
+            color: "rgba(128, 0, 0, 0.7)",
+            lineWidth: 1,
+            priceScaleId: "right",
+          });
+          dcLower.setData(qe.donchianLower.map((p) => ({ time: p.time as Time, value: p.value })));
+          indicatorSeriesRef.current.set("QUANTEDGE-DC-LOWER", dcLower);
+          const dcMid = chart.addLineSeries({
+            color: "rgba(128, 128, 128, 0.6)",
+            lineWidth: 1,
+            lineStyle: LineStyle.Dotted,
+            priceScaleId: "right",
+          });
+          dcMid.setData(qe.donchianMid.map((p) => ({ time: p.time as Time, value: p.value })));
+          indicatorSeriesRef.current.set("QUANTEDGE-DC-MID", dcMid);
+
+          // FVG boxes as a series primitive (most recent 40, Pine cap).
+          if (qe.fvgBoxes.length > 0) {
+            const primitive = new FvgBoxesPrimitive(qe.fvgBoxes);
+            try {
+              candleSeries.attachPrimitive(primitive);
+              fvgPrimitiveRef.current = primitive;
+            } catch {
+              /* primitive attach failed — lines above still render */
+            }
+          }
+          break;
+        }
       }
     }
+
+    // Detach the FVG primitive on cleanup (effect re-run / unmount) so it
+    // never outlives the series it was attached to.
+    return () => {
+      if (fvgPrimitiveRef.current) {
+        try {
+          candleSeries.detachPrimitive(fvgPrimitiveRef.current);
+        } catch {
+          /* already detached */
+        }
+        fvgPrimitiveRef.current = null;
+      }
+    };
     // chartRef/candleSeriesRef are stable refs; colors derived from isDark dep.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeIndicators, chartData, isDark]);

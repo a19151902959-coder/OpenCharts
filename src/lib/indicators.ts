@@ -303,8 +303,321 @@ export function vwap(candles: CandleData[]): IndicatorPoint[] {
   return result;
 }
 
+// ── Quant-Edge (TypeScript port of Pine Script v6) ─────────────
+// Port of "Quant-Edge 终极全能手机版" (see docs/quant-edge.pine for the
+// verbatim Pine source). OpenCharts has no Pine runtime, so every Pine
+// construct below is re-implemented against CandleData[].
+//
+// Seeding differences vs Pine (documented, not hidden):
+// - Pine ta.ema() seeds from the first bar; this repo's ema() seeds with the
+//   SMA of the first `period` closes (same for the MACD signal line). The
+//   first EMA200 value therefore appears at bar 200 in both, and the two
+//   series converge to within a fraction of an ATR after ~200 more bars.
+// - Pine ta.rsi() and this repo's rsi() are both Wilder's smoothed RSI, so
+//   RSI14/RSI2 match Pine exactly (up to float rounding).
+// - Pine ta.atr() is Wilder's smoothed TR; this repo's atr() is identical.
+// - ta.pivothigh(high, 5, 5): a pivot at bar j is confirmed at bar j+5.
+//   Pine requires the pivot high to be strictly greater than the 5 bars to
+//   its left and greater-or-equal to the 5 bars to its right; this port
+//   implements exactly that rule.
+
+export interface QuantEdgeMarker {
+  time: number;
+  position: "aboveBar" | "belowBar";
+  color: string;
+  /** lightweight-charts v4 has no diamond marker shape; 抄底/逃顶 use "circle". */
+  shape: "arrowUp" | "arrowDown" | "circle";
+  text: string;
+}
+
+export interface QuantEdgeFvgBox {
+  fromTime: number;
+  toTime: number;
+  /** Higher price (Pine box.new `top` argument). */
+  top: number;
+  /** Lower price (Pine box.new `bottom` argument). */
+  bottom: number;
+  bullish: boolean;
+}
+
+export interface QuantEdgeHud {
+  /** 1 = bull structure, -1 = bear structure, 0 = ranging (Pine smcTrend). */
+  smcTrend: number;
+  isBull: boolean;
+  rsi14: number | null;
+  rsi2: number | null;
+  /** Pine: atr14 * 2 — the ATR stop reference. */
+  atrStop: number | null;
+}
+
+export interface QuantEdgeResult {
+  ema200: IndicatorPoint[];
+  donchianUpper: IndicatorPoint[];
+  donchianLower: IndicatorPoint[];
+  donchianMid: IndicatorPoint[];
+  markers: QuantEdgeMarker[];
+  fvgBoxes: QuantEdgeFvgBox[];
+  hud: QuantEdgeHud;
+}
+
+const QUANT_EDGE_MAX_MARKERS = 300;
+const QUANT_EDGE_MAX_BOXES = 40; // Pine: max_boxes_count=40
+
+function medianSpacing(times: number[]): number {
+  const diffs: number[] = [];
+  for (let i = 1; i < times.length; i++) {
+    const d = times[i]! - times[i - 1]!;
+    if (d > 0) diffs.push(d);
+  }
+  if (diffs.length === 0) return 60;
+  diffs.sort((a, b) => a - b);
+  return diffs[Math.floor(diffs.length / 2)]!;
+}
+
+/**
+ * Full Quant-Edge computation. All seven Pine features are computed here:
+ * EMA200 trend line, MACD+RSI BUY/SELL, SMC BOS/CHoCH, FVG boxes, Donchian
+ * 20 channel, Connors RSI(2) 抄底/逃顶, and the HUD values. Alerts
+ * (alertcondition) have no equivalent in OpenCharts and are intentionally
+ * not implemented.
+ */
+export function quantEdge(candles: CandleData[], swingLen = 5, dcLen = 20): QuantEdgeResult {
+  const n = candles.length;
+  const empty: QuantEdgeResult = {
+    ema200: [],
+    donchianUpper: [],
+    donchianLower: [],
+    donchianMid: [],
+    markers: [],
+    fvgBoxes: [],
+    hud: { smcTrend: 0, isBull: false, rsi14: null, rsi2: null, atrStop: null },
+  };
+  if (n === 0) return empty;
+
+  const ema200 = ema(candles, 200);
+  const sma200 = sma(candles, 200);
+  const rsi14Pts = rsi(candles, 14);
+  const rsi2Pts = rsi(candles, 2);
+  const atr14Pts = atr(candles, 14);
+  const macdRes = macd(candles, 12, 26, 9);
+  const times = candles.map((c) => c.time);
+  const spacing = medianSpacing(times);
+
+  const byTime = (pts: IndicatorPoint[]) => new Map(pts.map((p) => [p.time, p.value]));
+  const emaByTime = byTime(ema200);
+  const smaByTime = byTime(sma200);
+  const rsi14ByTime = byTime(rsi14Pts);
+  const rsi2ByTime = byTime(rsi2Pts);
+  const atrByTime = byTime(atr14Pts);
+  const macdByTime = byTime(macdRes.macd);
+  const signalByTime = byTime(macdRes.signal);
+
+  // ── Donchian 20 ──────────────────────────────────────────────
+  // Pine: dcUpper = ta.highest(high, 20)[1] — at bar i, the highest high of
+  // bars [i-20, i-1] (the [1] shifts the 20-bar window one bar back).
+  const donchianUpper: IndicatorPoint[] = [];
+  const donchianLower: IndicatorPoint[] = [];
+  const donchianMid: IndicatorPoint[] = [];
+  for (let i = dcLen; i < n; i++) {
+    let upper = -Infinity;
+    let lower = Infinity;
+    for (let j = i - dcLen; j < i; j++) {
+      if (candles[j]!.high > upper) upper = candles[j]!.high;
+      if (candles[j]!.low < lower) lower = candles[j]!.low;
+    }
+    const t = candles[i]!.time;
+    donchianUpper.push({ time: t, value: upper });
+    donchianLower.push({ time: t, value: lower });
+    donchianMid.push({ time: t, value: (upper + lower) / 2 });
+  }
+
+  // ── SMC pivots + BUY/SELL + Connors, bar by bar (Pine order) ─
+  const markers: QuantEdgeMarker[] = [];
+  const fvgBoxes: QuantEdgeFvgBox[] = [];
+  let lastHigh: number | null = null;
+  let lastLow: number | null = null;
+  let smcTrend = 0;
+
+  const isPivotHigh = (j: number): boolean => {
+    const h = candles[j]!.high;
+    for (let k = j - swingLen; k < j; k++) if (candles[k]!.high >= h) return false;
+    for (let k = j + 1; k <= j + swingLen; k++) if (candles[k]!.high > h) return false;
+    return true;
+  };
+  const isPivotLow = (j: number): boolean => {
+    const l = candles[j]!.low;
+    for (let k = j - swingLen; k < j; k++) if (candles[k]!.low <= l) return false;
+    for (let k = j + 1; k <= j + swingLen; k++) if (candles[k]!.low < l) return false;
+    return true;
+  };
+
+  for (let i = 0; i < n; i++) {
+    const c = candles[i]!;
+    const t = c.time;
+
+    // FVG — Pine checks bar i against bar i-2 (needs close[1] > open[1]).
+    if (i >= 2) {
+      const bullFvg = c.low > candles[i - 2]!.high && candles[i - 1]!.close > candles[i - 1]!.open;
+      const bearFvg = c.high < candles[i - 2]!.low && candles[i - 1]!.close < candles[i - 1]!.open;
+      // Pine box.new(left, top, right, bottom) — top is the HIGHER price:
+      // bull box top = low (> high[2] by the FVG condition), bottom = high[2];
+      // bear box top = low[2] (> high by the condition), bottom = high.
+      if (bullFvg) {
+        fvgBoxes.push({
+          fromTime: candles[i - 2]!.time,
+          toTime: t + 6 * spacing,
+          top: c.low,
+          bottom: candles[i - 2]!.high,
+          bullish: true,
+        });
+      } else if (bearFvg) {
+        fvgBoxes.push({
+          fromTime: candles[i - 2]!.time,
+          toTime: t + 6 * spacing,
+          top: candles[i - 2]!.low,
+          bottom: c.high,
+          bullish: false,
+        });
+      }
+    }
+
+    // SMC: pivots confirmed at bar i belong to pivot bar j = i - swingLen.
+    const j = i - swingLen;
+    if (j >= swingLen && j + swingLen < n) {
+      if (isPivotHigh(j)) lastHigh = candles[j]!.high;
+      if (isPivotLow(j)) lastLow = candles[j]!.low;
+    }
+
+    const e200 = emaByTime.get(t);
+    const r14 = rsi14ByTime.get(t);
+    const r2 = rsi2ByTime.get(t);
+    const s200 = smaByTime.get(t);
+    const m = macdByTime.get(t);
+    const s = signalByTime.get(t);
+    const prev = i > 0 ? candles[i - 1]! : null;
+    const prevT = prev ? prev.time : null;
+    const prevM = prevT !== null ? macdByTime.get(prevT) : undefined;
+    const prevS = prevT !== null ? signalByTime.get(prevT) : undefined;
+    const prevE200 = prevT !== null ? emaByTime.get(prevT) : undefined;
+
+    // SMC breaks — Pine crossover/ crossunder against the tracked pivot.
+    const bullBreak =
+      lastHigh !== null && prev !== null && prev.close <= lastHigh && c.close > lastHigh;
+    const bearBreak =
+      lastLow !== null && prev !== null && prev.close >= lastLow && c.close < lastLow;
+    if (bullBreak) {
+      markers.push({
+        time: t,
+        position: "aboveBar",
+        color: smcTrend === -1 ? "#00ffff" : "#00ff00",
+        shape: "arrowDown",
+        text: smcTrend === -1 ? "CHoCH" : "BOS",
+      });
+      smcTrend = 1;
+      lastHigh = null;
+    }
+    if (bearBreak) {
+      markers.push({
+        time: t,
+        position: "belowBar",
+        color: smcTrend === 1 ? "#ff00ff" : "#ff0000",
+        shape: "arrowUp",
+        text: smcTrend === 1 ? "CHoCH" : "BOS",
+      });
+      smcTrend = -1;
+      lastLow = null;
+    }
+
+    // BUY / SELL — EMA200 trend + MACD crossover + RSI14 band.
+    if (e200 !== undefined && r14 !== undefined && m !== undefined && s !== undefined) {
+      const isBull = c.close > e200;
+      const macdCrossUp =
+        prevM !== undefined && prevS !== undefined && prevM <= prevS && m > s;
+      const macdCrossDown =
+        prevM !== undefined && prevS !== undefined && prevM >= prevS && m < s;
+      if (isBull && macdCrossUp && r14 > 50 && r14 < 70) {
+        markers.push({
+          time: t,
+          position: "belowBar",
+          color: "#00c853",
+          shape: "arrowUp",
+          text: "BUY",
+        });
+      }
+      const emaCrossDown =
+        prevE200 !== undefined && prev !== null && prev.close >= prevE200 && c.close < e200;
+      if ((!isBull && macdCrossDown && r14 < 50 && r14 > 30) || (isBull && emaCrossDown)) {
+        markers.push({
+          time: t,
+          position: "aboveBar",
+          color: "#ff1744",
+          shape: "arrowDown",
+          text: "SELL",
+        });
+      }
+    }
+
+    // Connors RSI(2) — dip-buy / pop-sell.
+    if (s200 !== undefined && r2 !== undefined) {
+      if (c.close > s200 && r2 < 10) {
+        markers.push({
+          time: t,
+          position: "belowBar",
+          color: "#00ffff",
+          shape: "circle",
+          text: "抄底",
+        });
+      } else if (c.close < s200 && r2 > 90) {
+        markers.push({
+          time: t,
+          position: "aboveBar",
+          color: "#ffff00",
+          shape: "circle",
+          text: "逃顶",
+        });
+      }
+    }
+  }
+
+  // Keep the most recent markers/boxes (Pine caps labels at 80, boxes at 40).
+  const recentMarkers = markers.slice(-QUANT_EDGE_MAX_MARKERS);
+  const recentBoxes = fvgBoxes.slice(-QUANT_EDGE_MAX_BOXES);
+
+  const lastT = times[n - 1]!;
+  const lastE200 = emaByTime.get(lastT);
+  const lastClose = candles[n - 1]!.close;
+  const lastR14 = rsi14ByTime.get(lastT) ?? null;
+  const lastR2 = rsi2ByTime.get(lastT) ?? null;
+  const lastAtr = atrByTime.get(lastT) ?? null;
+
+  return {
+    ema200,
+    donchianUpper,
+    donchianLower,
+    donchianMid,
+    markers: recentMarkers,
+    fvgBoxes: recentBoxes,
+    hud: {
+      smcTrend,
+      isBull: lastE200 !== undefined ? lastClose > lastE200 : false,
+      rsi14: lastR14,
+      rsi2: lastR2,
+      atrStop: lastAtr !== null ? lastAtr * 2 : null,
+    },
+  };
+}
+
 // ── Indicator Registry (for UI) ──────────────────────────────
-export type IndicatorType = "SMA" | "EMA" | "RSI" | "MACD" | "BOLL" | "ATR" | "STOCH" | "VWAP";
+export type IndicatorType =
+  | "SMA"
+  | "EMA"
+  | "RSI"
+  | "MACD"
+  | "BOLL"
+  | "ATR"
+  | "STOCH"
+  | "VWAP"
+  | "QUANTEDGE";
 
 export type IndicatorPane = "overlay" | "below";
 
@@ -372,5 +685,12 @@ export const INDICATOR_REGISTRY: IndicatorConfig[] = [
     pane: "overlay",
     defaultParams: {},
     color: "#42a5f5",
+  },
+  {
+    type: "QUANTEDGE",
+    label: "Quant-Edge",
+    pane: "overlay",
+    defaultParams: { swingLen: 5, dcLen: 20 },
+    color: "#00ff00",
   },
 ];
