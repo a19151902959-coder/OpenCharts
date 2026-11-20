@@ -180,7 +180,7 @@ export function ChartToolbar({
                   <Search className="h-4 w-4 text-muted-foreground shrink-0" />
                   <input
                     autoFocus
-                    placeholder="Search symbols..."
+                    placeholder="搜索品种…"
                     value={symbolFilter}
                     onChange={(e) => setSymbolFilter(e.target.value)}
                     className="flex-1 bg-transparent text-base outline-none"
@@ -198,7 +198,7 @@ export function ChartToolbar({
                 <div className="flex-1 overflow-y-auto overscroll-contain">
                   {filteredSymbols.length === 0 ? (
                     <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                      No symbols match &ldquo;{symbolFilter}&rdquo;
+                      没有匹配 “{symbolFilter}” 的品种
                     </div>
                   ) : (
                     filteredSymbols.map((s) => (
@@ -234,7 +234,7 @@ export function ChartToolbar({
             <div className="hidden md:block absolute top-full left-0 z-50 mt-1 w-64 bg-card border border-border rounded-lg shadow-xl overflow-hidden">
               <input
                 autoFocus
-                placeholder="Search symbols..."
+                placeholder="搜索品种…"
                 value={symbolFilter}
                 onChange={(e) => setSymbolFilter(e.target.value)}
                 className="w-full px-3 py-2 text-sm border-b border-border bg-card"
@@ -283,7 +283,7 @@ export function ChartToolbar({
             )}
           </span>
           <span className="text-muted-foreground text-[10px] font-medium ml-0.5 hidden md:inline">
-            Sprd: {spread}
+            点差：{spread}
           </span>
         </div>
       )}
@@ -295,7 +295,7 @@ export function ChartToolbar({
             key={tf}
             onClick={() => onTimeframeChange(tf)}
             disabled={isReplaying}
-            title={isReplaying ? "Timeframe is fixed to 1m during replay" : undefined}
+            title={isReplaying ? "回放期间周期固定为 1 分钟" : undefined}
             className={cn(
               "px-2 py-1 rounded-md text-xs font-medium transition-all",
               tf === timeframe
@@ -361,7 +361,7 @@ export function ChartToolbar({
                     style={{ backgroundColor: ind.color }}
                   />
                   <span className="flex-1">{ind.label}</span>
-                  <span className="text-[10px] text-muted-foreground">{ind.pane}</span>
+                  <span className="text-[10px] text-muted-foreground">{ind.pane === "overlay" ? "叠加" : "下方"}</span>
                 </button>
               ))}
             </div>
@@ -394,19 +394,19 @@ export function ChartToolbar({
       <div className="hidden md:flex items-center gap-0.5">
         <ToolButton
           icon={ArrowUpDown}
-          tooltip="Order Panel"
+          tooltip="订单面板"
           active={showRightPanel && rightPanel === "order"}
           onClick={() => onRightPanel("order")}
         />
         <ToolButton
           icon={Layers}
-          tooltip="Depth of Market"
+          tooltip="市场深度"
           active={showRightPanel && rightPanel === "dom"}
           onClick={() => onRightPanel("dom")}
         />
         <ToolButton
           icon={BarChart3}
-          tooltip="Watchlist"
+          tooltip="自选列表"
           active={showRightPanel && rightPanel === "watchlist"}
           onClick={() => onRightPanel("watchlist")}
         />
@@ -414,14 +414,14 @@ export function ChartToolbar({
         {!isHyperliquidMode() && (
           <ToolButton
             icon={Newspaper}
-            tooltip="News"
+            tooltip="资讯"
             active={showRightPanel && rightPanel === "news"}
             onClick={() => onRightPanel("news")}
           />
         )}
         <ToolButton
           icon={Star}
-          tooltip="TradingView Analysis"
+          tooltip="TradingView 分析"
           active={showRightPanel && rightPanel === "tv-analysis"}
           onClick={() => onRightPanel("tv-analysis")}
         />
@@ -463,12 +463,12 @@ export function ToolButton({
 }
 
 const CHART_PLUGIN_ITEMS = [
-  { id: "crosshair", icon: Crosshair, label: "Crosshair Highlight" },
-  { id: "session", icon: Clock, label: "Session Highlighting" },
-  { id: "session-breaks", icon: CalendarDays, label: "Session Breaks" },
-  { id: "bands", icon: AlignCenter, label: "Bands Indicator" },
-  { id: "tooltip", icon: Info, label: "OHLCV Tooltip" },
-  { id: "delta-tooltip", icon: Activity, label: "Delta Tooltip" },
+  { id: "crosshair", icon: Crosshair, label: "十字光标高亮" },
+  { id: "session", icon: Clock, label: "交易时段高亮" },
+  { id: "session-breaks", icon: CalendarDays, label: "时段分隔线" },
+  { id: "bands", icon: AlignCenter, label: "区间指标" },
+  { id: "tooltip", icon: Info, label: "OHLCV 提示" },
+  { id: "delta-tooltip", icon: Activity, label: "Delta 提示" },
 ] satisfies Array<{ id: string; icon: LucideIcon; label: string }>;
 
 function PluginsDropdown({
@@ -498,7 +498,7 @@ function PluginsDropdown({
     <div ref={containerRef} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        title="Chart Plugins"
+        title="图表插件"
         className={cn(
           "flex items-center gap-1 px-1.5 py-1 rounded",
           isActive ? "bg-primary/20 text-primary" : "hover:bg-secondary text-muted-foreground",
@@ -527,7 +527,7 @@ function PluginsDropdown({
               >
                 <Icon className="h-3.5 w-3.5 shrink-0" />
                 <span className="flex-1">{label}</span>
-                {isOn && <span className="text-[10px] text-primary font-medium">ON</span>}
+                {isOn && <span className="text-[10px] text-primary font-medium">开</span>}
               </button>
             );
           })}
@@ -538,22 +538,22 @@ function PluginsDropdown({
 }
 
 const DRAWING_TOOLS = [
-  { tool: "horizontal" as const, icon: Minus, label: "Horizontal Line", shortcut: "Alt+H" },
-  { tool: "trendline" as const, icon: TrendingUp, label: "Trendline", shortcut: "Alt+T" },
-  { tool: "fibonacci" as const, icon: Layers, label: "Fibonacci", shortcut: "Alt+F" },
-  { tool: "rectangle" as const, icon: Square, label: "Rectangle", shortcut: "Alt+R" },
-  { tool: "ray" as const, icon: MoveUpRight, label: "Ray", shortcut: "" },
-  { tool: "extended" as const, icon: Spline, label: "Extended Line", shortcut: "" },
-  { tool: "vertical" as const, icon: MoveVertical, label: "Vertical Line", shortcut: "" },
-  { tool: "channel" as const, icon: Equal, label: "Parallel Channel", shortcut: "" },
-  { tool: "fibextension" as const, icon: Layers3, label: "Fib Extension", shortcut: "" },
-  { tool: "ellipse" as const, icon: Circle, label: "Ellipse", shortcut: "" },
-  { tool: "arrow" as const, icon: ArrowRight, label: "Arrow", shortcut: "" },
-  { tool: "triangle" as const, icon: Triangle, label: "Triangle", shortcut: "" },
-  { tool: "text" as const, icon: Type, label: "Text", shortcut: "" },
-  { tool: "long-position" as const, icon: ArrowUpRight, label: "Long Position", shortcut: "" },
-  { tool: "short-position" as const, icon: ArrowDownRight, label: "Short Position", shortcut: "" },
-  { tool: "measure" as const, icon: Ruler, label: "Measure", shortcut: "Alt+M" },
+  { tool: "horizontal" as const, icon: Minus, label: "水平线", shortcut: "Alt+H" },
+  { tool: "trendline" as const, icon: TrendingUp, label: "趋势线", shortcut: "Alt+T" },
+  { tool: "fibonacci" as const, icon: Layers, label: "斐波那契", shortcut: "Alt+F" },
+  { tool: "rectangle" as const, icon: Square, label: "矩形", shortcut: "Alt+R" },
+  { tool: "ray" as const, icon: MoveUpRight, label: "射线", shortcut: "" },
+  { tool: "extended" as const, icon: Spline, label: "延长线", shortcut: "" },
+  { tool: "vertical" as const, icon: MoveVertical, label: "垂直线", shortcut: "" },
+  { tool: "channel" as const, icon: Equal, label: "平行通道", shortcut: "" },
+  { tool: "fibextension" as const, icon: Layers3, label: "斐波那契扩展", shortcut: "" },
+  { tool: "ellipse" as const, icon: Circle, label: "椭圆", shortcut: "" },
+  { tool: "arrow" as const, icon: ArrowRight, label: "箭头", shortcut: "" },
+  { tool: "triangle" as const, icon: Triangle, label: "三角形", shortcut: "" },
+  { tool: "text" as const, icon: Type, label: "文本", shortcut: "" },
+  { tool: "long-position" as const, icon: ArrowUpRight, label: "做多仓位", shortcut: "" },
+  { tool: "short-position" as const, icon: ArrowDownRight, label: "做空仓位", shortcut: "" },
+  { tool: "measure" as const, icon: Ruler, label: "测量", shortcut: "Alt+M" },
 ] satisfies Array<{ tool: DrawingTool; icon: LucideIcon; label: string; shortcut: string }>;
 
 function DrawingOptionToggle({
@@ -579,7 +579,7 @@ function DrawingOptionToggle({
     >
       <Icon className="h-3.5 w-3.5 shrink-0" />
       <span className="flex-1">{label}</span>
-      {enabled && <span className="text-[10px] text-primary font-medium">ON</span>}
+      {enabled && <span className="text-[10px] text-primary font-medium">开</span>}
     </button>
   );
 }
@@ -633,7 +633,7 @@ function DrawingToolsDropdown({
     <div ref={containerRef} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        title="Drawing Tools"
+        title="绘图工具"
         className={cn(
           "px-1.5 py-1 rounded",
           isActive ? "bg-primary/20 text-primary" : "hover:bg-secondary text-muted-foreground",
@@ -664,17 +664,17 @@ function DrawingToolsDropdown({
             icon={Magnet}
             label={
               magnetMode === "strong"
-                ? "Magnet: strong"
+                ? "磁吸：强"
                 : magnetMode === "weak"
-                  ? "Magnet: weak"
-                  : "Magnet: off"
+                  ? "磁吸：弱"
+                  : "磁吸：关"
             }
             enabled={magnetMode !== "none"}
             onToggle={onCycleMagnet}
           />
           <DrawingOptionToggle
             icon={Repeat}
-            label="Stay in drawing mode"
+            label="保持绘图模式"
             enabled={stayInDrawingMode}
             onToggle={onToggleStayInDrawingMode}
           />
@@ -687,7 +687,7 @@ function DrawingToolsDropdown({
                 className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-secondary text-muted-foreground text-left"
               >
                 <Trash2 className="h-3.5 w-3.5 shrink-0" />
-                Clear All
+                全部清除
               </button>
             </>
           )}

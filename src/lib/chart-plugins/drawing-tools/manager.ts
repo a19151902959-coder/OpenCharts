@@ -320,7 +320,7 @@ export class DrawingToolsManager {
       // Offset line defaults parallel and mirrored below so it's visible/draggable.
       return { ...two, type: "channel", time3: p1.time, price3: 2 * p1.price - p2.price };
     }
-    if (tool === "text") return { ...two, type: "text", text: "Text" };
+    if (tool === "text") return { ...two, type: "text", text: "文本" };
     return { ...two, type: tool as DrawingType };
   }
 

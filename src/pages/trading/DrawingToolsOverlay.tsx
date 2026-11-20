@@ -172,7 +172,7 @@ export function DrawingFloatingToolbar({
       />
       <Divider />
       <IconButton
-        title={drawing.locked ? "Unlock" : "Lock"}
+        title={drawing.locked ? "解锁" : "锁定"}
         active={drawing.locked}
         onClick={() => patch({ locked: !drawing.locked })}
       >
@@ -180,20 +180,20 @@ export function DrawingFloatingToolbar({
       </IconButton>
       {(drawing.type === "horizontal" || drawing.type === "trendline") && (
         <IconButton
-          title={drawing.alertEnabled ? "Remove price alert" : "Add price alert"}
+          title={drawing.alertEnabled ? "删除价格提醒" : "添加价格提醒"}
           active={drawing.alertEnabled}
           onClick={() => patch({ alertEnabled: !drawing.alertEnabled })}
         >
           <Bell className="h-3.5 w-3.5" />
         </IconButton>
       )}
-      <IconButton title="Clone" onClick={onClone}>
+      <IconButton title="克隆" onClick={onClone}>
         <Copy className="h-3.5 w-3.5" />
       </IconButton>
-      <IconButton title="Settings" onClick={onOpenSettings}>
+      <IconButton title="设置" onClick={onOpenSettings}>
         <Settings2 className="h-3.5 w-3.5" />
       </IconButton>
-      <IconButton title="Delete (Del)" onClick={onRemove}>
+      <IconButton title="删除 (Del)" onClick={onRemove}>
         <Trash2 className="h-3.5 w-3.5" />
       </IconButton>
     </div>
@@ -228,7 +228,7 @@ function ExtendToggles({
   patch: (p: Partial<DrawingLine>) => void;
 }) {
   return (
-    <SettingsRow label="Extend">
+    <SettingsRow label="延长">
       <div className="flex items-center gap-3 text-xs">
         <label className="flex items-center gap-1.5 cursor-pointer">
           <input
@@ -261,7 +261,7 @@ function FillControls({
   patch: (p: Partial<DrawingLine>) => void;
 }) {
   return (
-    <SettingsRow label="Fill">
+    <SettingsRow label="填充">
       <div className="flex items-center gap-2">
         <input
           type="color"
@@ -291,7 +291,7 @@ function ArrowheadToggles({
   patch: (p: Partial<DrawingLine>) => void;
 }) {
   return (
-    <SettingsRow label="Arrows">
+    <SettingsRow label="箭头">
       <div className="flex items-center gap-3 text-xs">
         <label className="flex items-center gap-1.5 cursor-pointer">
           <input
@@ -325,7 +325,7 @@ function FibLevelsRow({
   const defaults = drawing.type === "fibextension" ? FIB_EXT_LEVELS : FIB_LEVELS;
   const current = drawing.fibLevels ?? [...defaults];
   return (
-    <SettingsRow label="Levels">
+    <SettingsRow label="层级">
       <input
         type="text"
         defaultValue={current.join(", ")}
@@ -379,30 +379,30 @@ function CoordinateInputs({
   return (
     <>
       <NumRow
-        label={isPos ? "Entry" : "Price"}
+        label={isPos ? "入场价" : "价格"}
         value={drawing.price}
         onChange={(price) => patch({ price })}
       />
       {drawing.price2 != null && !isPos && (
-        <NumRow label="Price 2" value={drawing.price2} onChange={(price2) => patch({ price2 })} />
+        <NumRow label="价格 2" value={drawing.price2} onChange={(price2) => patch({ price2 })} />
       )}
       {isPos && (
         <NumRow
-          label="Stop"
+          label="止损"
           value={drawing.stopPrice}
           onChange={(stopPrice) => patch({ stopPrice })}
         />
       )}
       {isPos && (
         <NumRow
-          label="Target"
+          label="目标"
           value={drawing.targetPrice}
           onChange={(targetPrice) => patch({ targetPrice })}
         />
       )}
       {isPos && (
         <NumRow
-          label="Risk %"
+          label="风险 %"
           value={drawing.riskPct ?? 1}
           onChange={(riskPct) => patch({ riskPct })}
         />
@@ -429,14 +429,14 @@ function TextFormatBar({
         type="color"
         value={drawing.color}
         onChange={(e) => patch({ color: e.target.value })}
-        title="Text color"
+        title="文字颜色"
         className="h-7 w-9 cursor-pointer rounded bg-transparent border border-border p-0.5"
       />
       <select
         value={drawing.fontSize ?? 14}
         onChange={(e) => patch({ fontSize: Number.parseInt(e.target.value, 10) })}
         className="h-7 rounded border border-border bg-secondary px-1.5 text-xs"
-        title="Font size"
+        title="字号"
       >
         {FONT_SIZES.map((s) => (
           <option key={s} value={s}>
@@ -446,7 +446,7 @@ function TextFormatBar({
       </select>
       <button
         type="button"
-        title="Bold"
+        title="加粗"
         onClick={() => patch({ bold: !drawing.bold })}
         className={cn(toggle, "font-bold", drawing.bold && on)}
       >
@@ -454,7 +454,7 @@ function TextFormatBar({
       </button>
       <button
         type="button"
-        title="Italic"
+        title="斜体"
         onClick={() => patch({ italic: !drawing.italic })}
         className={cn(toggle, "italic font-serif", drawing.italic && on)}
       >
@@ -509,7 +509,7 @@ function TextSettings({
       <textarea
         value={drawing.text ?? ""}
         onChange={(e) => patch({ text: e.target.value })}
-        placeholder="Text"
+        placeholder="文本"
         rows={5}
         style={{
           fontWeight: drawing.bold ? 700 : 400,
@@ -518,7 +518,7 @@ function TextSettings({
         className="min-h-[120px] w-full resize-y rounded-md border border-border bg-secondary px-2.5 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-primary/40"
       />
       <TextToggleRow
-        label="Background"
+        label="背景"
         enabled={Boolean(drawing.textBg)}
         color={drawing.textBgColor ?? ""}
         fallback="#1e222d"
@@ -526,7 +526,7 @@ function TextSettings({
         onColor={(textBgColor) => patch({ textBgColor, textBg: true })}
       />
       <TextToggleRow
-        label="Border"
+        label="边框"
         enabled={Boolean(drawing.textBorder)}
         color={drawing.textBorderColor ?? ""}
         fallback={drawing.color}
@@ -547,7 +547,7 @@ function LineStyleSection({
 }) {
   return (
     <>
-      <SettingsRow label="Color">
+      <SettingsRow label="颜色">
         <input
           type="color"
           value={drawing.color}
@@ -555,10 +555,10 @@ function LineStyleSection({
           className="h-6 w-10 cursor-pointer bg-transparent border-0 p-0"
         />
       </SettingsRow>
-      <SettingsRow label="Width">
+      <SettingsRow label="线宽">
         <WidthButtons current={drawing.width ?? 2} onPick={(width) => patch({ width })} />
       </SettingsRow>
-      <SettingsRow label="Style">
+      <SettingsRow label="样式">
         <LineStyleButtons
           current={drawing.lineStyle ?? "solid"}
           onPick={(lineStyle) => patch({ lineStyle })}
@@ -597,7 +597,7 @@ function StyleTools({
           type="button"
           className={btn}
           onClick={() => {
-            const name = window.prompt("Template name")?.trim();
+            const name = window.prompt("模板名称")?.trim();
             if (name) {
               saveTemplate(name, drawing);
               setTemplates(getTemplates());
@@ -608,7 +608,7 @@ function StyleTools({
         </button>
       </div>
       {templates.length > 0 && (
-        <SettingsRow label="Template">
+        <SettingsRow label="模板">
           <select
             value=""
             onChange={(e) => {
@@ -675,7 +675,7 @@ export function DrawingSettingsDialog({
         <div className="pt-1 border-t border-border/60" />
         <CoordinateInputs drawing={drawing} patch={patch} />
 
-        <SettingsRow label="Visibility">
+        <SettingsRow label="可见性">
           <select
             value={drawing.visibility === "tf" ? "tf" : "all"}
             onChange={(e) =>
@@ -781,7 +781,7 @@ export function DrawingContextMenu({
     <>
       <button
         type="button"
-        aria-label="Close menu"
+        aria-label="关闭菜单"
         className="fixed inset-0 z-40 cursor-default"
         onClick={onClose}
       />
@@ -789,28 +789,28 @@ export function DrawingContextMenu({
         className="fixed z-40 w-44 rounded-md bg-card border border-border shadow-2xl py-1"
         style={{ left: x, top: y }}
       >
-        <MenuItem icon={Settings2} label="Settings" onClick={act(onSettings)} />
-        <MenuItem icon={Copy} label="Duplicate" onClick={act(onDuplicate)} />
+        <MenuItem icon={Settings2} label="设置" onClick={act(onSettings)} />
+        <MenuItem icon={Copy} label="复制" onClick={act(onDuplicate)} />
         <MenuItem
           icon={ChevronsUp}
-          label="Bring to front"
+          label="置于顶层"
           onClick={act(() => onReorder("front"))}
         />
-        <MenuItem icon={ChevronsDown} label="Send to back" onClick={act(() => onReorder("back"))} />
+        <MenuItem icon={ChevronsDown} label="置于底层" onClick={act(() => onReorder("back"))} />
         <MenuItem
           icon={drawing.locked ? LockOpen : Lock}
-          label={drawing.locked ? "Unlock" : "Lock"}
+          label={drawing.locked ? "解锁" : "锁定"}
           onClick={act(onToggleLock)}
         />
         {canAlert && (
           <MenuItem
             icon={Bell}
-            label={drawing.alertEnabled ? "Remove alert" : "Add alert"}
+            label={drawing.alertEnabled ? "删除提醒" : "添加提醒"}
             onClick={act(onToggleAlert)}
           />
         )}
         <div className="my-1 border-t border-border/60" />
-        <MenuItem icon={Trash2} label="Delete" danger onClick={act(onRemove)} />
+        <MenuItem icon={Trash2} label="删除" danger onClick={act(onRemove)} />
       </div>
     </>
   );
