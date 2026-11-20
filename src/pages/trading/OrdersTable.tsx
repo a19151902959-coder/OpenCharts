@@ -28,7 +28,7 @@ export function OrdersTable({
   if (orders.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
-        No pending orders
+        暂无待成交订单
       </div>
     );
   }
@@ -37,15 +37,15 @@ export function OrdersTable({
     <table className="w-full text-[11px]">
       <thead className="sticky top-0 bg-card z-10">
         <tr>
-          <th>Symbol</th>
-          <th>Side</th>
-          <th>Type</th>
-          <th>Qty</th>
-          <th>Price</th>
-          <th>SL</th>
-          <th>TP</th>
-          <th>Status</th>
-          <th>Time</th>
+          <th>品种</th>
+          <th>方向</th>
+          <th>类型</th>
+          <th>数量</th>
+          <th>价格</th>
+          <th>止损</th>
+          <th>止盈</th>
+          <th>状态</th>
+          <th>时间</th>
           <th></th>
         </tr>
       </thead>
@@ -67,15 +67,15 @@ export function OrdersTable({
             tabIndex={onSelectSymbol ? 0 : undefined}
           >
             <td className="font-semibold">{o.symbolName}</td>
-            <td className={o.side === "BUY" ? "text-buy" : "text-sell"}>{o.side}</td>
-            <td>{o.type}</td>
+            <td className={o.side === "BUY" ? "text-buy" : "text-sell"}>{o.side === "BUY" ? "买入" : o.side === "SELL" ? "卖出" : o.side}</td>
+            <td>{{ MARKET: "市价", LIMIT: "限价", STOP: "止损单" }[o.type] ?? o.type}</td>
             <td className="font-mono">{o.quantity}</td>
             <td className="font-mono">
               {o.price
                 ? formatNumber(o.price, 5)
                 : o.stopPrice
                   ? formatNumber(o.stopPrice, 5)
-                  : "MKT"}
+                  : "市价"}
             </td>
             <td className="font-mono text-sell">
               {o.stopLoss ? formatNumber(o.stopLoss, 5) : "--"}
@@ -83,7 +83,7 @@ export function OrdersTable({
             <td className="font-mono text-buy">
               {o.takeProfit ? formatNumber(o.takeProfit, 5) : "--"}
             </td>
-            <td>{o.status}</td>
+            <td>{{ PENDING: "待成交", NEW: "新建", FILLED: "已成交", PARTIAL: "部分成交", CANCELLED: "已取消", REJECTED: "已拒绝" }[o.status] ?? o.status}</td>
             <td className="text-muted-foreground">{formatDate(o.createdAt)}</td>
             <td>
               <div className="flex gap-1">
@@ -95,7 +95,7 @@ export function OrdersTable({
                     }}
                     className="px-1.5 py-0.5 text-[10px] rounded bg-accent/20 text-accent hover:bg-accent/30"
                   >
-                    Modify
+                    修改
                   </button>
                 )}
                 <button
@@ -105,7 +105,7 @@ export function OrdersTable({
                   }}
                   className="px-1.5 py-0.5 text-[10px] rounded bg-warning/20 text-warning hover:bg-warning/30"
                 >
-                  Cancel
+                  取消
                 </button>
               </div>
             </td>

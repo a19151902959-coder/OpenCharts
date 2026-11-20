@@ -63,7 +63,7 @@ export function TradeCalculator({ tick: _tick, symbolInfo }: TradeCalcProps) {
       </div>
       <div className="bg-secondary/50 rounded p-2 space-y-1 mt-2">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Risk Amount</span>
+          <span className="text-muted-foreground">风险金额</span>
           <span className="font-mono text-accent">{formatCurrency(riskAmount)}</span>
         </div>
         <div className="flex justify-between">
@@ -71,7 +71,7 @@ export function TradeCalculator({ tick: _tick, symbolInfo }: TradeCalcProps) {
           <span className="font-mono">{formatCurrency(pipValue)}</span>
         </div>
         <div className="flex justify-between font-semibold">
-          <span>Recommended Size</span>
+          <span>建议仓位</span>
           <span className="font-mono text-accent">{recommendedLots.toFixed(2)} lots</span>
         </div>
       </div>

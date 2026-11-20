@@ -641,7 +641,7 @@ export function quantEdge(candles: CandleData[], swingLen = 5, dcLen = 20): Quan
 //   boundary). Trade window is Always (24/7): the user trades crypto
 //   (BTCUSD), so the New-York-open window is not applied.
 // - Gamma regime has no data source in OpenCharts: it is treated as
-//   "Not set" (no setups skipped). Call/put walls are 0 (off).
+//   "未设置" (no setups skipped). Call/put walls are 0 (off).
 // - Footprint per-price-row, the pressure wave and the AI agent packet /
 //   webhook have no equivalent here and are NOT implemented.
 
@@ -1638,10 +1638,10 @@ export function orderFlow(candles: CandleData[]): OrderFlowResult {
         markers.push({ time: t, position: "aboveBar", color: OF_MAGENTA, shape: "circle", text: "转向" });
       }
       if (openedLong) {
-        markers.push({ time: t, position: "belowBar", color: OF_GREEN, shape: "arrowUp", text: "LONG" });
+        markers.push({ time: t, position: "belowBar", color: OF_GREEN, shape: "arrowUp", text: "做多" });
       }
       if (openedShort) {
-        markers.push({ time: t, position: "aboveBar", color: OF_RED, shape: "arrowDown", text: "SHORT" });
+        markers.push({ time: t, position: "aboveBar", color: OF_RED, shape: "arrowDown", text: "做空" });
       }
 
       // Impulse candles: aggression WITH a result (not on entry/absorption bars).
@@ -1814,7 +1814,7 @@ export function orderFlow(candles: CandleData[]): OrderFlowResult {
   })();
   const stateLabel =
     tSide !== 0
-      ? `持仓 ${tSide === 1 ? "LONG" : "SHORT"} · ${tStatus}`
+      ? `持仓 ${tSide === 1 ? "做多" : "做空"} · ${tStatus === "NONE" ? "持仓中" : tStatus === "TRAILING" ? "跟踪中" : tStatus === "BREAKEVEN" ? "保本" : tStatus}`
       : tradesToday >= OF_MAX_TRADES
         ? "今日已满"
         : lossStreak >= OF_MAX_LOSS_STREAK
@@ -1921,21 +1921,21 @@ export interface IndicatorConfig {
 export const INDICATOR_REGISTRY: IndicatorConfig[] = [
   {
     type: "SMA",
-    label: "Simple Moving Average",
+    label: "简单移动平均线",
     pane: "overlay",
     defaultParams: { period: 20 },
     color: "#f0b90b",
   },
   {
     type: "EMA",
-    label: "Exponential Moving Average",
+    label: "指数移动平均线",
     pane: "overlay",
     defaultParams: { period: 20 },
     color: "#e377c2",
   },
   {
     type: "RSI",
-    label: "Relative Strength Index",
+    label: "相对强弱指数",
     pane: "below",
     defaultParams: { period: 14 },
     color: "#8884d8",
@@ -1949,28 +1949,28 @@ export const INDICATOR_REGISTRY: IndicatorConfig[] = [
   },
   {
     type: "BOLL",
-    label: "Bollinger Bands",
+    label: "布林带",
     pane: "overlay",
     defaultParams: { period: 20, stdDev: 2 },
     color: "#26a69a",
   },
   {
     type: "ATR",
-    label: "Average True Range",
+    label: "平均真实波幅",
     pane: "below",
     defaultParams: { period: 14 },
     color: "#ff7043",
   },
   {
     type: "STOCH",
-    label: "Stochastic Oscillator",
+    label: "随机指标",
     pane: "below",
     defaultParams: { kPeriod: 14, dPeriod: 3 },
     color: "#ab47bc",
   },
   {
     type: "VWAP",
-    label: "Volume Weighted Avg Price",
+    label: "成交量加权均价",
     pane: "overlay",
     defaultParams: {},
     color: "#42a5f5",
@@ -1984,7 +1984,7 @@ export const INDICATOR_REGISTRY: IndicatorConfig[] = [
   },
   {
     type: "ORDERFLOW",
-    label: "Order Flow",
+    label: "订单流",
     pane: "overlay",
     defaultParams: {},
     color: "#00e5ff",

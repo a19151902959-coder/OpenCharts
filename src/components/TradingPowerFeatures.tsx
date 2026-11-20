@@ -42,7 +42,7 @@ export function NewsFeed({ symbol }: { symbol: string }) {
             <Globe className="h-4 w-4 text-accent" /> Market News
           </span>
           <span className="text-[9px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-            Sample data
+            示例数据
           </span>
         </CardTitle>
       </CardHeader>
