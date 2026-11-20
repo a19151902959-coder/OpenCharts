@@ -763,7 +763,7 @@ function addPositionOverlay(
       lineWidth: 1,
       lineStyle: LineStyle.Dotted,
       axisLabelVisible: true,
-      title: `${pos.side === "LONG" ? "buy" : "sell"} ${pos.quantity.toFixed(2)}`,
+      title: `${pos.side === "LONG" ? "买入" : "卖出"} ${pos.quantity.toFixed(2)}`,
     }),
   );
   const direction = pos.side === "LONG" ? 1 : -1;
@@ -847,7 +847,7 @@ function entryMarker(ev: ReplayTradeEvent, time: Time): SeriesMarker<Time> {
 
 function exitMarker(ev: ReplayTradeEvent, time: Time): SeriesMarker<Time> {
   const profit = ev.pnl != null && ev.pnl >= 0;
-  const text = ev.pnl != null ? `${ev.pnl >= 0 ? "+" : ""}$${Math.abs(ev.pnl).toFixed(0)}` : "Exit";
+  const text = ev.pnl != null ? `${ev.pnl >= 0 ? "+" : ""}$${Math.abs(ev.pnl).toFixed(0)}` : "出场";
   return {
     time,
     position: profit ? "aboveBar" : "belowBar",
@@ -868,7 +868,7 @@ function buildReplayMarker(ev: ReplayTradeEvent, timeframe: Timeframe): SeriesMa
     position: "aboveBar",
     color: "#FF1744",
     shape: "square",
-    text: ev.ruleCode ?? "Rule",
+    text: ev.ruleCode ?? "规则",
   };
 }
 
@@ -981,20 +981,20 @@ function QuantEdgeHudPanel({ hud }: { hud: QuantEdgeResult["hud"] }) {
 // panel and the chart can never disagree.
 function OrderFlowHudPanel({ hud }: { hud: OrderFlowResult["hud"] }) {
   const biasText =
-    hud.bias === 1 ? "VALUE UP ▲" : hud.bias === -1 ? "VALUE DOWN ▼" : "BALANCE";
+    hud.bias === 1 ? "价值向上 ▲" : hud.bias === -1 ? "价值向下 ▼" : "均衡";
   const biasColor =
     hud.bias === 1 ? "text-[#00ff9c]" : hud.bias === -1 ? "text-[#ff2d55]" : "text-white/70";
   const posText =
     hud.valuePos === "DISCOUNT"
-      ? "割安区"
+      ? "折价区"
       : hud.valuePos === "PREMIUM"
-        ? "割高区"
+        ? "溢价区"
         : hud.valuePos === "INSIDE_VALUE"
           ? "价值区内"
           : "—";
   return (
     <div className="absolute top-2 right-2 z-20 pointer-events-none rounded-md border border-white/10 bg-black/70 px-2 py-1.5 text-[10px] font-mono shadow-lg">
-      <div className="text-white font-semibold">Order Flow</div>
+      <div className="text-white font-semibold">订单流</div>
       <div className="grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 mt-0.5">
         <span className="text-white/50">环境</span>
         <span className={biasColor}>{biasText}</span>
@@ -1023,7 +1023,7 @@ function OrderFlowHudPanel({ hud }: { hud: OrderFlowResult["hud"] }) {
         <span className="text-white/50">持仓</span>
         <span className="text-white/90">
           {hud.trade
-            ? `${hud.trade.side === 1 ? "LONG" : "SHORT"} @ ${hud.trade.entry.toFixed(2)} · 止损 ${hud.trade.stop.toFixed(2)} · 目标 ${hud.trade.target.toFixed(2)}`
+            ? `${hud.trade.side === 1 ? "做多" : "做空"} @ ${hud.trade.entry.toFixed(2)} · 止损 ${hud.trade.stop.toFixed(2)} · 目标 ${hud.trade.target.toFixed(2)}`
             : (hud.lastOutcome ?? "无")}
         </span>
         <span className="text-white/50">VAH / POC / VAL</span>
@@ -1154,7 +1154,7 @@ function ObjectTreeOverlay({
     <>
       <button
         type="button"
-        title="Object tree (drawings)"
+        title="对象树（画线）"
         onClick={onToggle}
         className={cn(
           "absolute bottom-2 left-2 z-10 p-1.5 rounded-md border border-border bg-card/90 shadow",
@@ -1518,8 +1518,8 @@ export function ChartPanel({
       const text = price.toFixed(pipDigits);
       void navigator.clipboard
         ?.writeText(text)
-        .then(() => toast.success("Copied", text))
-        .catch(() => toast.error("Copy failed", "Clipboard unavailable"));
+        .then(() => toast.success("已复制", text))
+        .catch(() => toast.error("复制失败", "剪贴板不可用"));
     },
     [pipDigits],
   );
@@ -1535,7 +1535,7 @@ export function ChartPanel({
         alertEnabled: true,
         createdTf: timeframe,
       });
-      toast.info("Alert set", `${selectedSymbol} at ${rounded}`);
+      toast.info("已设置提醒", `${selectedSymbol} 价格 ${rounded}`);
     },
     [onAddDrawing, pipDigits, timeframe, selectedSymbol],
   );
@@ -2037,7 +2037,7 @@ export function ChartPanel({
     const crossed = detectCrossings(drawingsRef.current, prev, mid, nowSec, alertFiredRef.current);
     for (const d of crossed) {
       toast.info(
-        "Price alert",
+        "价格提醒",
         d.alertMessage ?? `${selectedSymbol} crossed your ${d.type} @ ${mid.toFixed(pipDigits)}`,
       );
       playAlertBeep();
