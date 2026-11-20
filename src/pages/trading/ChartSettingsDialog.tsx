@@ -36,14 +36,14 @@ export interface ChartSettingsDialogProps {
 type TabId = "appearance" | "colors" | "trading" | "events" | "challenge";
 
 const TABS: Array<{ id: TabId; label: string; icon: ReactNode }> = [
-  { id: "appearance", label: "Appearance", icon: <CandlestickChart className="h-3.5 w-3.5" /> },
-  { id: "colors", label: "Colors", icon: <Palette className="h-3.5 w-3.5" /> },
-  { id: "trading", label: "Trading", icon: <Crosshair className="h-3.5 w-3.5" /> },
-  { id: "events", label: "Events", icon: <Newspaper className="h-3.5 w-3.5" /> },
-  { id: "challenge", label: "Challenge", icon: <Target className="h-3.5 w-3.5" /> },
+  { id: "appearance", label: "外观", icon: <CandlestickChart className="h-3.5 w-3.5" /> },
+  { id: "colors", label: "颜色", icon: <Palette className="h-3.5 w-3.5" /> },
+  { id: "trading", label: "交易", icon: <Crosshair className="h-3.5 w-3.5" /> },
+  { id: "events", label: "事件", icon: <Newspaper className="h-3.5 w-3.5" /> },
+  { id: "challenge", label: "挑战", icon: <Target className="h-3.5 w-3.5" /> },
 ];
 
-/** Per-tab "Reset to defaults" payloads. Events tab has none (plugin-driven). */
+/** Per-tab "恢复默认设置" payloads. Events tab has none (plugin-driven). */
 const RESET_BY_TAB: Partial<Record<TabId, Partial<ChartPreferences>>> = {
   appearance: {
     showWicks: true,
@@ -168,7 +168,7 @@ function ColorRow({
             onClick={() => onChange("")}
             className="text-[10px] text-muted-foreground hover:text-foreground"
           >
-            Reset
+            重置
           </button>
         )}
       </div>
@@ -209,38 +209,38 @@ function AppearanceTab({ prefs }: { prefs: ChartPreferences }) {
   const set = updateChartPreferences;
   return (
     <div>
-      <SectionTitle>Candles</SectionTitle>
-      <ToggleRow label="Wicks" checked={prefs.showWicks} onChange={(v) => set({ showWicks: v })} />
+      <SectionTitle>K 线</SectionTitle>
+      <ToggleRow label="影线" checked={prefs.showWicks} onChange={(v) => set({ showWicks: v })} />
       <ToggleRow
-        label="Candle borders"
+        label="K 线边框"
         checked={prefs.showCandleBorders}
         onChange={(v) => set({ showCandleBorders: v })}
       />
-      <SectionTitle>Chart elements</SectionTitle>
+      <SectionTitle>图表元素</SectionTitle>
       <ToggleRow
-        label="Volume"
-        hint="Histogram at the bottom of the chart"
+        label="数量"
+        hint="图表底部的成交量柱"
         checked={prefs.showVolume}
         onChange={(v) => set({ showVolume: v })}
       />
       <ToggleRow
-        label="Grid lines"
+        label="网格线"
         checked={prefs.showGrid}
         onChange={(v) => set({ showGrid: v })}
       />
       <ToggleRow
-        label="Symbol watermark"
+        label="品种水印"
         checked={prefs.showWatermark}
         onChange={(v) => set({ showWatermark: v })}
       />
       <ToggleRow
-        label="Candle countdown"
-        hint="Time remaining until the bar closes"
+        label="K 线倒计时"
+        hint="距离 K 线收盘的剩余时间"
         checked={prefs.showCountdown}
         onChange={(v) => set({ showCountdown: v })}
       />
       <ToggleRow
-        label="OHLC legend"
+        label="OHLC 图例"
         checked={prefs.showOhlcLegend}
         onChange={(v) => set({ showOhlcLegend: v })}
       />
@@ -252,27 +252,27 @@ function ElementColorRows({ prefs, theme }: { prefs: ChartPreferences; theme: Ch
   const set = updateChartPreferences;
   return (
     <>
-      <SectionTitle>Chart elements</SectionTitle>
+      <SectionTitle>图表元素</SectionTitle>
       <ColorRow
-        label="Background"
+        label="背景"
         value={prefs.colorBackground}
         fallback={theme.background}
         onChange={(v) => set({ colorBackground: v })}
       />
       <ColorRow
-        label="Grid"
+        label="网格"
         value={prefs.colorGrid}
         fallback={theme.grid}
         onChange={(v) => set({ colorGrid: v })}
       />
       <ColorRow
-        label="Scales text"
+        label="坐标轴文字"
         value={prefs.colorScaleText}
         fallback={theme.text}
         onChange={(v) => set({ colorScaleText: v })}
       />
       <ColorRow
-        label="Crosshair"
+        label="十字光标"
         value={prefs.colorCrosshair}
         fallback={theme.crosshair}
         onChange={(v) => set({ colorCrosshair: v })}
@@ -285,21 +285,21 @@ function LineColorRows({ prefs, theme }: { prefs: ChartPreferences; theme: Chart
   const set = updateChartPreferences;
   return (
     <>
-      <SectionTitle>Price &amp; order lines</SectionTitle>
+      <SectionTitle>价格与订单线</SectionTitle>
       <ColorRow
-        label="Bid line"
+        label="买价线"
         value={prefs.colorBidLine}
         fallback={theme.bidLine}
         onChange={(v) => set({ colorBidLine: v })}
       />
       <ColorRow
-        label="Ask line"
+        label="卖价线"
         value={prefs.colorAskLine}
         fallback={theme.askLine}
         onChange={(v) => set({ colorAskLine: v })}
       />
       <ColorPairRow
-        label="Open positions"
+        label="持仓"
         a={{
           value: prefs.colorPositionLong,
           fallback: theme.positionLong,
@@ -312,19 +312,19 @@ function LineColorRows({ prefs, theme }: { prefs: ChartPreferences; theme: Chart
         }}
       />
       <ColorRow
-        label="Pending orders"
+        label="待成交订单"
         value={prefs.colorOrderLine}
         fallback={theme.orderLine}
         onChange={(v) => set({ colorOrderLine: v })}
       />
       <ColorRow
-        label="Take profit"
+        label="止盈"
         value={prefs.colorTpLine}
         fallback={theme.tpLine}
         onChange={(v) => set({ colorTpLine: v })}
       />
       <ColorRow
-        label="Stop loss"
+        label="止损"
         value={prefs.colorSlLine}
         fallback={theme.slLine}
         onChange={(v) => set({ colorSlLine: v })}
@@ -340,9 +340,9 @@ function ColorsTab({ prefs, isDark }: { prefs: ChartPreferences; isDark: boolean
     <div>
       <ElementColorRows prefs={prefs} theme={theme} />
       <LineColorRows prefs={prefs} theme={theme} />
-      <SectionTitle>Candles</SectionTitle>
+      <SectionTitle>K 线</SectionTitle>
       <ColorPairRow
-        label="Candle body, border &amp; wick"
+        label="K 线实体、边框与影线"
         a={{
           value: prefs.candleUpColor,
           fallback: theme.up,
@@ -362,20 +362,20 @@ function TradingTab({ prefs }: { prefs: ChartPreferences }) {
   const set = updateChartPreferences;
   return (
     <div>
-      <SectionTitle>Price lines</SectionTitle>
+      <SectionTitle>价格线</SectionTitle>
       <ToggleRow
-        label="Bid line"
+        label="买价线"
         checked={prefs.showBidLine}
         onChange={(v) => set({ showBidLine: v })}
       />
       <ToggleRow
-        label="Ask line"
+        label="卖价线"
         checked={prefs.showAskLine}
         onChange={(v) => set({ showAskLine: v })}
       />
-      <SectionTitle>Positions &amp; orders</SectionTitle>
+      <SectionTitle>持仓与订单</SectionTitle>
       <ToggleRow
-        label="Show positions and orders on chart"
+        label="在图表上显示持仓和订单"
         hint="Entry, TP and SL lines with drag-to-edit"
         checked={prefs.overlayPositionsOnChart}
         onChange={(v) => set({ overlayPositionsOnChart: v })}
@@ -397,22 +397,22 @@ function EventsTab({
 }) {
   return (
     <div>
-      <SectionTitle>Sessions</SectionTitle>
+      <SectionTitle>交易时段</SectionTitle>
       <ToggleRow
-        label="Session breaks"
+        label="时段分隔线"
         hint="Vertical line at each trading-day boundary (intraday only)"
         checked={activePlugins.includes("session-breaks")}
         disabled={!onTogglePlugin}
         onChange={() => onTogglePlugin?.("session-breaks")}
       />
       <ToggleRow
-        label="Session highlighting"
+        label="时段高亮"
         hint="Shade Asia / London / New York forex sessions"
         checked={activePlugins.includes("session")}
         disabled={!onTogglePlugin}
         onChange={() => onTogglePlugin?.("session")}
       />
-      <SectionTitle>News</SectionTitle>
+      <SectionTitle>资讯</SectionTitle>
       <button
         onClick={() => {
           onClose();
@@ -420,7 +420,7 @@ function EventsTab({
         }}
         className="mt-1 rounded border border-border px-3 py-1.5 text-xs text-foreground hover:bg-secondary"
       >
-        Configure news overlay…
+        配置资讯叠加层…
       </button>
       <p className="mt-2 text-[10px] text-muted-foreground">
         Impact filter, event markers and no-trade window shading are configured in the news overlay
@@ -435,35 +435,34 @@ function ChallengeTab({ prefs, hasAccount }: { prefs: ChartPreferences; hasAccou
   const master = prefs.challengeOverlay;
   return (
     <div>
-      <SectionTitle>Challenge levels on chart</SectionTitle>
+      <SectionTitle>图表上的挑战等级线</SectionTitle>
       <ToggleRow
-        label="Show challenge levels"
+        label="显示挑战等级"
         hint="Projects your account's rule thresholds onto the chart as price lines"
         checked={master}
         onChange={(v) => set({ challengeOverlay: v })}
       />
       <ToggleRow
-        label="Daily loss limit"
+        label="日亏损上限"
         checked={prefs.challengeDailyLossLine}
         disabled={!master}
         onChange={(v) => set({ challengeDailyLossLine: v })}
       />
       <ToggleRow
-        label="Max drawdown"
+        label="最大回撤"
         checked={prefs.challengeMaxDrawdownLine}
         disabled={!master}
         onChange={(v) => set({ challengeMaxDrawdownLine: v })}
       />
       <ToggleRow
-        label="Profit target"
+        label="盈利目标"
         checked={prefs.challengeProfitTargetLine}
         disabled={!master}
         onChange={(v) => set({ challengeProfitTargetLine: v })}
       />
       <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
-        Lines appear while you have an open position in the charted symbol — the price at which your
-        equity would hit each limit is computed from your net exposure and moves with every tick.
-        {!hasAccount && " Select an account to enable."}
+        当图表品种有持仓时显示这些线——净值触及各上限的价格按净敞口计算，并随每个报价跳动更新。
+        {!hasAccount && " 选择账户后启用。"}
       </p>
     </div>
   );
@@ -526,7 +525,7 @@ export function ChartSettingsDialog(props: ChartSettingsDialogProps) {
         >
           <div className="flex items-center gap-1.5">
             <GripVertical className="h-3.5 w-3.5 text-muted-foreground/60" />
-            <h2 className="text-sm font-semibold text-foreground">Chart Settings</h2>
+            <h2 className="text-sm font-semibold text-foreground">图表设置</h2>
           </div>
           <button onClick={close} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
@@ -562,7 +561,7 @@ export function ChartSettingsDialog(props: ChartSettingsDialogProps) {
               className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground"
             >
               <RotateCcw className="h-3 w-3" />
-              Reset to defaults
+              恢复默认设置
             </button>
           ) : (
             <span />
@@ -571,7 +570,7 @@ export function ChartSettingsDialog(props: ChartSettingsDialogProps) {
             onClick={close}
             className="rounded bg-secondary px-3 py-1 text-xs text-foreground hover:bg-secondary/70"
           >
-            Ok
+            确定
           </button>
         </div>
       </div>

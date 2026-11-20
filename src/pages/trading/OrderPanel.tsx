@@ -100,31 +100,31 @@ function GenericOrderPanel({
 
   const handleSubmit = () => {
     if (!isFeedConnected) {
-      toast.warning("No Data Feed", "Cannot place orders while disconnected from the data feed");
+      toast.warning("无行情数据", "未连接行情，无法下单");
       return;
     }
     if (!accountId) {
-      toast.warning("No Account", "Please select a trading account first");
+      toast.warning("未选择账户", "请先选择交易账户");
       return;
     }
     const qty = parseFloat(quantity);
     if (isNaN(qty) || qty <= 0) {
-      toast.warning("Invalid Quantity", "Quantity must be a positive number");
+      toast.warning("数量无效", "数量必须是正数");
       return;
     }
     if (qty > 1000) {
-      toast.warning("Invalid Quantity", "Maximum quantity is 1000 lots");
+      toast.warning("数量无效", "最大数量为 1000 手");
       return;
     }
     if (orderType === "LIMIT" && (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0)) {
-      toast.warning("Missing Price", "Limit orders require a valid price");
+      toast.warning("缺少价格", "限价单需要有效的价格");
       return;
     }
     if (
       orderType === "STOP" &&
       (!stopPrice || isNaN(parseFloat(stopPrice)) || parseFloat(stopPrice) <= 0)
     ) {
-      toast.warning("Missing Stop Price", "Stop orders require a valid stop price");
+      toast.warning("缺少止损价", "止损单需要有效的止损价");
       return;
     }
     const effectiveType = orderType;
@@ -145,7 +145,7 @@ function GenericOrderPanel({
     const doSubmit = () =>
       placeOrder.mutateAsync(input, {
         onSuccess: () => {
-          toast.success("Order Sent", `${side} ${qty} ${symbol} (${effectiveType})`);
+          toast.success("订单已发送", `${side} ${qty} ${symbol} (${effectiveType})`);
           onOrderSuccess?.();
         },
         onError: (err: unknown) => {
@@ -157,16 +157,16 @@ function GenericOrderPanel({
           const code = e?.error?.code ?? e?.code;
           const msg = e?.error?.message || e?.message || "Failed to place order";
           if (code === "ACCOUNT_PASSED") {
-            toast.success("Account Passed!", msg);
+            toast.success("账户通过！", msg);
           } else if (code === "ACCOUNT_FAILED") {
-            toast.error("Account Failed", msg);
+            toast.error("账户未通过", msg);
           } else if (code === "REQUEST_TIMEOUT") {
             toast.error(
-              "Order Timed Out",
-              "The server didn't respond in time. Check your connection and try again.",
+              "订单超时",
+              "服务器未及时响应，请检查网络后重试",
             );
           } else {
-            toast.error("Order Failed", msg);
+            toast.error("下单失败", msg);
           }
         },
       });
@@ -203,7 +203,7 @@ function GenericOrderPanel({
     <div className="flex flex-col h-full" data-testid="order-form">
       <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-secondary">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          New Order
+          新订单
         </h3>
         <div className="flex items-center gap-2">
           <button
@@ -214,7 +214,7 @@ function GenericOrderPanel({
                 ? "bg-accent/15 text-accent border-accent/30"
                 : "text-muted-foreground border-border hover:bg-secondary",
             )}
-            title={soundMuted ? "Unmute trade sounds" : "Mute trade sounds"}
+            title={soundMuted ? "取消静音交易音效" : "静音交易音效"}
           >
             {soundMuted ? <VolumeX className="h-2.5 w-2.5" /> : <Volume2 className="h-2.5 w-2.5" />}
           </button>
@@ -226,10 +226,10 @@ function GenericOrderPanel({
                 ? "bg-buy/15 text-buy border-buy/30"
                 : "text-muted-foreground border-border hover:bg-secondary",
             )}
-            title="One-click trading: skip confirmation for market orders"
+            title="一键交易：市价单跳过确认"
           >
             <Zap className="h-2.5 w-2.5" />
-            1-Click
+            一键下单
           </button>
           <span className="text-xs font-semibold">{symbol}</span>
         </div>
@@ -245,7 +245,7 @@ function GenericOrderPanel({
             className="text-xs"
           >
             <TrendingUp className="h-3 w-3 mr-1" />
-            BUY {tick ? formatNumber(tick.ask, 5) : ""}
+            买入 {tick ? formatNumber(tick.ask, 5) : ""}
           </Button>
           <Button
             variant={side === "SELL" ? "sell" : "outline"}
@@ -254,14 +254,14 @@ function GenericOrderPanel({
             className="text-xs"
           >
             <TrendingDown className="h-3 w-3 mr-1" />
-            SELL {tick ? formatNumber(tick.bid, 5) : ""}
+            卖出 {tick ? formatNumber(tick.bid, 5) : ""}
           </Button>
         </div>
 
         {/* Order Type */}
         <div>
           <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
-            Order Type
+            订单类型
           </label>
           <div className="grid grid-cols-3 gap-1 mt-1">
             {(["MARKET", "LIMIT", "STOP"] as const).map((t) => (
@@ -275,7 +275,7 @@ function GenericOrderPanel({
                     : "hover:bg-secondary",
                 )}
               >
-                {t.replace("_", " ")}
+                {{ MARKET: "市价", LIMIT: "限价", STOP: "止损单" }[t]}
               </button>
             ))}
           </div>
@@ -284,7 +284,7 @@ function GenericOrderPanel({
         {/* Quantity */}
         <div>
           <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
-            Volume (lots)
+            数量（手）
           </label>
           <div className="flex items-center gap-1 mt-1">
             <button
@@ -329,7 +329,7 @@ function GenericOrderPanel({
         {orderType === "LIMIT" && (
           <div>
             <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
-              Price
+              价格
             </label>
             <input
               type="number"
@@ -345,7 +345,7 @@ function GenericOrderPanel({
         {orderType === "STOP" && (
           <div>
             <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
-              Stop Price
+              止损价
             </label>
             <input
               type="number"
@@ -361,7 +361,7 @@ function GenericOrderPanel({
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
-              Take Profit
+              止盈
             </label>
             <input
               type="number"
@@ -373,7 +373,7 @@ function GenericOrderPanel({
           </div>
           <div>
             <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
-              Stop Loss
+              止损
             </label>
             <input
               type="number"
@@ -410,30 +410,30 @@ function GenericOrderPanel({
               <div className="flex items-center gap-1 mb-1">
                 <AlertTriangle className={cn("h-3 w-3", riskColor)} />
                 <span className="font-semibold text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Risk Analysis
+                  风险分析
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Risk Amount</span>
+                <span className="text-muted-foreground">风险金额</span>
                 <span className={cn("font-mono font-semibold", riskColor)}>
                   {formatCurrency(riskDollar)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Risk % of Balance</span>
+                <span className="text-muted-foreground">风险占比</span>
                 <span className={cn("font-mono font-semibold", riskColor)}>
                   {riskPct.toFixed(2)}%
                 </span>
               </div>
               {tpDollar != null && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Reward</span>
+                  <span className="text-muted-foreground">收益</span>
                   <span className="font-mono text-buy">{formatCurrency(tpDollar)}</span>
                 </div>
               )}
               {rrRatio != null && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">R:R Ratio</span>
+                  <span className="text-muted-foreground">盈亏比</span>
                   <span
                     className={cn(
                       "font-mono font-semibold",
@@ -447,7 +447,7 @@ function GenericOrderPanel({
               {riskPct > 5 && (
                 <div className="text-destructive text-[9px] flex items-center gap-1 mt-1">
                   <AlertTriangle className="h-2.5 w-2.5" />
-                  High risk — exceeds 5% of balance
+                  高风险——超过账户余额的 5%
                 </div>
               )}
             </div>
@@ -458,11 +458,11 @@ function GenericOrderPanel({
         {symbolInfo && tick && (
           <div className="bg-secondary rounded p-2 text-[10px] space-y-1">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Contract Size</span>
+              <span className="text-muted-foreground">合约规模</span>
               <span>{symbolInfo.contractSize?.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Margin Required</span>
+              <span className="text-muted-foreground">所需保证金</span>
               <span>
                 {formatCurrency(
                   (parseFloat(quantity) || 0) *
@@ -473,7 +473,7 @@ function GenericOrderPanel({
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Commission</span>
+              <span className="text-muted-foreground">手续费</span>
               <span>
                 {formatCurrency((symbolInfo.commission ?? 0) * (parseFloat(quantity) || 0))}
               </span>
@@ -484,10 +484,10 @@ function GenericOrderPanel({
         {isDemo && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded p-2 text-center">
             <p className="text-amber-400 text-[10px] font-semibold uppercase tracking-wider">
-              Demo Mode
+              模拟模式
             </p>
             <p className="text-muted-foreground text-[10px] mt-0.5">
-              Trading is disabled in demo mode
+              模拟模式下无法交易
             </p>
           </div>
         )}
@@ -500,21 +500,21 @@ function GenericOrderPanel({
           disabled={!accountId || placeOrder.isPending || isDemo || !isFeedConnected}
         >
           {isDemo
-            ? "Demo — Trading Disabled"
+            ? "模拟模式——交易已禁用"
             : !isFeedConnected
-              ? "Disconnected — Trading Disabled"
+              ? "未连接——交易已禁用"
               : placeOrder.isPending
-                ? "Placing…"
-                : `${side === "BUY" ? "Buy" : "Sell"} ${quantity} ${symbol}`}
+                ? "下单中…"
+                : `${side === "BUY" ? "买入" : "卖出"} ${quantity} ${symbol}`}
         </Button>
 
         {placeOrder.isError && (
           <p className="text-destructive text-xs mt-1 p-1.5 bg-destructive/10 rounded">
-            {(placeOrder.error as { message?: string } | null)?.message || "Order failed"}
+            {(placeOrder.error as { message?: string } | null)?.message || "下单失败"}
           </p>
         )}
         {placeOrder.isSuccess && (
-          <p className="text-buy text-xs mt-1 p-1.5 bg-buy/10 rounded">Order placed successfully</p>
+          <p className="text-buy text-xs mt-1 p-1.5 bg-buy/10 rounded">订单已成功提交</p>
         )}
       </div>
     </div>

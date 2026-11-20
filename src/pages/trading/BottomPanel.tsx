@@ -41,7 +41,7 @@ type AccountOption = Pick<Account, "id"> & { label?: string | null };
 
 function getErrorMessage(error: unknown): string {
   const actionError = error as TradingActionError;
-  return actionError.error?.message || actionError.message || "Request failed";
+  return actionError.error?.message || actionError.message || "请求失败";
 }
 
 export interface BottomPanelProps {
@@ -90,37 +90,37 @@ export function BottomPanel({
 
   const handleCancel = (orderId: string) => {
     if (!accountId || isDemo) {
-      if (isDemo) toast.warning("Demo Mode", "Trading actions are disabled in demo mode");
+      if (isDemo) toast.warning("模拟模式", "模拟模式下无法进行交易操作");
       return;
     }
     if (!isFeedConnected) {
-      toast.warning("No Data Feed", "Cannot cancel orders while disconnected");
+      toast.warning("无行情数据", "未连接行情，无法取消订单");
       return;
     }
     if (cancelOrder.isPending) return;
     cancelOrder.mutate(
       { orderId, accountId },
       {
-        onSuccess: () => toast.info("Order Cancelled", "Pending order has been cancelled"),
-        onError: (err: unknown) => toast.error("Cancel Failed", getErrorMessage(err)),
+        onSuccess: () => toast.info("订单已取消", "待成交订单已取消"),
+        onError: (err: unknown) => toast.error("取消失败", getErrorMessage(err)),
       },
     );
   };
 
   const handleClosePosition = (positionId: string) => {
     if (!accountId || isDemo) {
-      if (isDemo) toast.warning("Demo Mode", "Trading actions are disabled in demo mode");
+      if (isDemo) toast.warning("模拟模式", "模拟模式下无法进行交易操作");
       return;
     }
     if (!isFeedConnected) {
-      toast.warning("No Data Feed", "Cannot close positions while disconnected");
+      toast.warning("无行情数据", "未连接行情，无法平仓");
       return;
     }
     if (closePosition.isPending) return;
     closePosition.mutate(
       { positionId, accountId },
       {
-        onSuccess: () => toast.success("Position Closed", "Position has been closed"),
+        onSuccess: () => toast.success("持仓已平仓", "持仓已平仓"),
         onError: (err: unknown) => toast.error("Close Failed", getErrorMessage(err)),
       },
     );
@@ -128,35 +128,35 @@ export function BottomPanel({
 
   const handlePartialClose = (positionId: string, quantity: number) => {
     if (!accountId || isDemo) {
-      if (isDemo) toast.warning("Demo Mode", "Trading actions are disabled in demo mode");
+      if (isDemo) toast.warning("模拟模式", "模拟模式下无法进行交易操作");
       return;
     }
     if (!isFeedConnected) {
-      toast.warning("No Data Feed", "Cannot close positions while disconnected");
+      toast.warning("无行情数据", "未连接行情，无法平仓");
       return;
     }
     if (closePosition.isPending) return;
     closePosition.mutate(
       { positionId, accountId, quantity },
       {
-        onSuccess: () => toast.success("Partial Close", `Closed ${quantity} of the position`),
-        onError: (err: unknown) => toast.error("Partial Close Failed", getErrorMessage(err)),
+        onSuccess: () => toast.success("部分平仓", `已平仓 ${quantity} 手`),
+        onError: (err: unknown) => toast.error("部分平仓失败", getErrorMessage(err)),
       },
     );
   };
 
   const handleCloseAll = () => {
     if (!accountId || isDemo) {
-      if (isDemo) toast.warning("Demo Mode", "Trading actions are disabled in demo mode");
+      if (isDemo) toast.warning("模拟模式", "模拟模式下无法进行交易操作");
       return;
     }
     if (!isFeedConnected) {
-      toast.warning("No Data Feed", "Cannot close positions while disconnected");
+      toast.warning("无行情数据", "未连接行情，无法平仓");
       return;
     }
     closeAllPositions.mutate(accountId, {
-      onSuccess: () => toast.success("All Closed", "All positions have been closed"),
-      onError: (err: unknown) => toast.error("Close All Failed", getErrorMessage(err)),
+      onSuccess: () => toast.success("全部已平仓", "所有持仓已全部平仓"),
+      onError: (err: unknown) => toast.error("全部平仓失败", getErrorMessage(err)),
     });
   };
 
@@ -185,25 +185,25 @@ export function BottomPanel({
   }[] = [
     {
       key: "positions",
-      label: "Positions",
+      label: "持仓",
       icon: TrendingUp,
       count: openPositions.length,
     },
     {
       key: "orders",
-      label: "Orders",
+      label: "订单",
       icon: Clock,
       count: pendingOrders.length,
     },
-    { key: "history", label: "Trade History", icon: History },
+    { key: "history", label: "交易记录", icon: History },
     {
       key: "journal",
-      label: "Journal",
+      label: "日志",
       icon: BookOpen,
       count: journalEntries.length,
     },
-    { key: "calendar", label: "Calendar", icon: Globe },
-    { key: "news", label: "News", icon: Newspaper },
+    { key: "calendar", label: "日历", icon: Globe },
+    { key: "news", label: "资讯", icon: Newspaper },
   ];
   // The calendar and news tabs are sample data; a live broker must not show it.
   const visibleTabs = isHyperliquidMode()
@@ -241,7 +241,7 @@ export function BottomPanel({
         {tab === "positions" && openPositions.length > 0 && (
           <div className="ml-auto flex items-center gap-2">
             <span className={cn("font-mono text-xs font-semibold", pnlClass(totalPnl))}>
-              P&L: {totalPnl >= 0 ? "+" : ""}
+              盈亏：{totalPnl >= 0 ? "+" : ""}
               {formatCurrency(totalPnl)}
             </span>
             <Button
@@ -251,7 +251,7 @@ export function BottomPanel({
               className="text-[10px] h-5"
               disabled={closeAllPositions.isPending || isDemo || !isFeedConnected}
             >
-              Close All
+              全部平仓
             </Button>
           </div>
         )}
@@ -338,20 +338,20 @@ function TradeHistoryTable({ accountId }: { accountId: string | null }) {
   if (!accountId)
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
-        Select an account
+        选择账户
       </div>
     );
   if (isLoading)
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
-        Loading...
+        加载中…
       </div>
     );
   if (trades.length === 0)
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
         No trade history yet
-        {activeAccount ? ` for ${activeAccount.label || accountId?.slice(0, 8)}` : ""}
+        {activeAccount ? `（${activeAccount.label || accountId?.slice(0, 8)}）` : ""}
       </div>
     );
 
@@ -360,15 +360,15 @@ function TradeHistoryTable({ accountId }: { accountId: string | null }) {
       <table className="w-full text-[11px]">
         <thead className="sticky top-0 bg-card z-10">
           <tr>
-            <th>Closed</th>
-            <th>Symbol</th>
-            <th>Side</th>
-            <th>Volume</th>
-            <th>Entry</th>
-            <th>Exit</th>
-            <th>{showPlatformFee ? "Fees" : "Commission"}</th>
-            <th>Gross P&L</th>
-            <th>Net P&L</th>
+            <th>平仓时间</th>
+            <th>品种</th>
+            <th>方向</th>
+            <th>数量</th>
+            <th>入场价</th>
+            <th>出场</th>
+            <th>{showPlatformFee ? "费用" : "手续费"}</th>
+            <th>毛盈亏</th>
+            <th>净盈亏</th>
           </tr>
         </thead>
         <tbody>
@@ -383,7 +383,7 @@ function TradeHistoryTable({ accountId }: { accountId: string | null }) {
                   {formatDate(t.closedAt || t.openedAt)}
                 </td>
                 <td className="font-semibold">{t.symbolName}</td>
-                <td className={t.side === "LONG" ? "text-buy" : "text-sell"}>{t.side}</td>
+                <td className={t.side === "LONG" ? "text-buy" : "text-sell"}>{t.side === "LONG" ? "做多" : t.side === "SHORT" ? "做空" : t.side}</td>
                 <td className="font-mono">{t.quantity}</td>
                 <td className="font-mono">{t.entryPrice ? formatNumber(t.entryPrice, 5) : "--"}</td>
                 <td className="font-mono">{t.exitPrice ? formatNumber(t.exitPrice, 5) : "--"}</td>
@@ -420,7 +420,7 @@ function TradeHistoryTable({ accountId }: { accountId: string | null }) {
             disabled={page <= 1}
             className="px-1.5 py-0.5 rounded bg-secondary hover:bg-secondary/80 disabled:opacity-40"
           >
-            Prev
+            上一页
           </button>
           <span className="text-muted-foreground">
             {page} / {totalPages}
@@ -430,7 +430,7 @@ function TradeHistoryTable({ accountId }: { accountId: string | null }) {
             disabled={page >= totalPages}
             className="px-1.5 py-0.5 rounded bg-secondary hover:bg-secondary/80 disabled:opacity-40"
           >
-            Next
+            下一页
           </button>
         </div>
       )}
@@ -469,7 +469,7 @@ function EconomicCalendar() {
               : "text-muted-foreground hover:bg-secondary",
           )}
         >
-          Sim Data
+          模拟数据
         </button>
         {tvAllowed && (
           <button
@@ -484,7 +484,7 @@ function EconomicCalendar() {
                 : "text-muted-foreground hover:bg-secondary",
             )}
           >
-            TradingView Live
+            TradingView 实时
           </button>
         )}
       </div>
@@ -500,13 +500,13 @@ function EconomicCalendar() {
         <table className="w-full text-[11px]">
           <thead className="sticky top-0 bg-card z-10">
             <tr>
-              <th>Time</th>
-              <th>Currency</th>
-              <th>Impact</th>
-              <th>Event</th>
-              <th>Forecast</th>
-              <th>Previous</th>
-              <th>Actual</th>
+              <th>时间</th>
+              <th>货币</th>
+              <th>影响</th>
+              <th>事件</th>
+              <th>预测</th>
+              <th>前值</th>
+              <th>实际</th>
             </tr>
           </thead>
           <tbody>
@@ -515,7 +515,7 @@ function EconomicCalendar() {
                 colSpan={7}
                 className="px-3 py-1.5 bg-secondary/40 text-[10px] text-muted-foreground"
               >
-                <span className="font-medium uppercase tracking-wide">Sample data</span>
+                <span className="font-medium uppercase tracking-wide">示例数据</span>
                 {tvAllowed ? " — switch the TradingView calendar back on for live events." : null}
               </td>
             </tr>
@@ -557,7 +557,7 @@ function NewsFeed() {
   return (
     <div className="divide-y divide-border/30">
       <div className="px-3 py-1.5 bg-secondary/40 text-[10px] text-muted-foreground flex items-center gap-1.5">
-        <span className="font-medium uppercase tracking-wide">Sample data</span>
+        <span className="font-medium uppercase tracking-wide">示例数据</span>
         <span>— OpenCharts ships no news feed; connect a provider to make this live.</span>
       </div>
       {MOCK_NEWS.map((item, i) => (

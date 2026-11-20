@@ -119,9 +119,9 @@ export function MobileTradingPanel({
       {/* Tab bar */}
       <div className="flex border-b border-slate-700">
         {[
-          { key: "order" as const, label: "Order" },
-          { key: "positions" as const, label: `Positions (${positions.length})` },
-          { key: "alerts" as const, label: "Alerts" },
+          { key: "order" as const, label: "下单" },
+          { key: "positions" as const, label: `持仓 (${positions.length})` },
+          { key: "alerts" as const, label: "提醒" },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -145,7 +145,7 @@ export function MobileTradingPanel({
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-white">{symbol}</span>
             <span className="text-xs text-slate-500">
-              Spread: <span className="text-amber-400">{spread.toFixed(1)} pts</span>
+              点差：<span className="text-amber-400">{spread.toFixed(1)} 点</span>
             </span>
           </div>
 
@@ -160,7 +160,7 @@ export function MobileTradingPanel({
                   orderType === t ? "bg-violet-600 text-white" : "bg-slate-800 text-slate-400",
                 )}
               >
-                {t}
+                {{ MARKET: "市价", LIMIT: "限价", STOP: "止损单" }[t]}
               </button>
             ))}
           </div>
@@ -169,7 +169,7 @@ export function MobileTradingPanel({
           {orderType !== "MARKET" && (
             <div>
               <label className="text-xs text-slate-400 mb-1 block">
-                {orderType === "LIMIT" ? "Limit Price" : "Stop Price"}
+                {orderType === "LIMIT" ? "限价" : "止损价"}
               </label>
               <input
                 type="number"
@@ -185,7 +185,7 @@ export function MobileTradingPanel({
           {/* Lot size presets */}
           <div>
             <label className="text-xs text-slate-400 mb-1.5 block">
-              Lot Size: <span className="text-white font-mono">{quantity}</span>
+              手数：<span className="text-white font-mono">{quantity}</span>
             </label>
             <div className="grid grid-cols-3 min-[400px]:grid-cols-6 gap-1.5">
               {LOT_PRESETS.map((lot) => (
@@ -219,30 +219,30 @@ export function MobileTradingPanel({
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="w-full text-xs text-slate-500 hover:text-slate-300 py-1 transition"
           >
-            {showAdvanced ? "▾ Hide SL/TP" : "▸ Set Stop Loss / Take Profit"}
+            {showAdvanced ? "▾ 隐藏止损/止盈" : "▸ 设置止损 / 止盈"}
           </button>
 
           {showAdvanced && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-red-400 mb-1 block">Stop Loss</label>
+                <label className="text-xs text-red-400 mb-1 block">止损</label>
                 <input
                   type="number"
                   step="any"
                   value={stopLoss}
                   onChange={(e) => setStopLoss(e.target.value)}
-                  placeholder="Optional"
+                  placeholder="选填"
                   className="w-full px-2 py-2 bg-slate-800 border border-red-500/30 rounded-lg text-white text-xs font-mono text-center focus:ring-2 focus:ring-red-500"
                 />
               </div>
               <div>
-                <label className="text-xs text-emerald-400 mb-1 block">Take Profit</label>
+                <label className="text-xs text-emerald-400 mb-1 block">止盈</label>
                 <input
                   type="number"
                   step="any"
                   value={takeProfit}
                   onChange={(e) => setTakeProfit(e.target.value)}
-                  placeholder="Optional"
+                  placeholder="选填"
                   className="w-full px-2 py-2 bg-slate-800 border border-emerald-500/30 rounded-lg text-white text-xs font-mono text-center focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -255,14 +255,14 @@ export function MobileTradingPanel({
               onClick={() => handleOrder("SELL")}
               className="py-4 rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 active:scale-[0.98] text-white font-bold transition-all"
             >
-              <div className="text-lg">SELL</div>
+              <div className="text-lg">卖出</div>
               <div className="text-xs font-mono opacity-80">{bid.toFixed(5)}</div>
             </button>
             <button
               onClick={() => handleOrder("BUY")}
               className="py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-[0.98] text-white font-bold transition-all"
             >
-              <div className="text-lg">BUY</div>
+              <div className="text-lg">买入</div>
               <div className="text-xs font-mono opacity-80">{ask.toFixed(5)}</div>
             </button>
           </div>
@@ -270,9 +270,9 @@ export function MobileTradingPanel({
           {/* Account info */}
           <div className="flex justify-between text-xs text-slate-500 pt-1">
             <span>
-              Balance: ${accountBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              余额：${accountBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </span>
-            <span>Open: {openPositionCount} pos</span>
+            <span>持仓：{openPositionCount} 个</span>
           </div>
         </div>
       )}
@@ -281,13 +281,13 @@ export function MobileTradingPanel({
       {activeTab === "positions" && (
         <div className="p-3 space-y-2 max-h-[50vh] overflow-y-auto">
           {positions.length === 0 ? (
-            <div className="text-center py-8 text-slate-500 text-sm">No open positions</div>
+            <div className="text-center py-8 text-slate-500 text-sm">暂无持仓</div>
           ) : (
             <>
               {/* Total P&L bar */}
               <div className="flex items-center justify-between bg-slate-800/60 rounded-lg p-2.5">
                 <span className="text-xs text-slate-400">
-                  Total P&L ({positions.length} positions)
+                  总盈亏（{positions.length} 个持仓）
                 </span>
                 <span
                   className={cn(
@@ -303,7 +303,7 @@ export function MobileTradingPanel({
               {positions.map((pos) => {
                 const posSymbol = pos.symbol ?? pos.symbolName ?? "";
                 const posSide =
-                  pos.side === "LONG" ? "BUY" : pos.side === "SHORT" ? "SELL" : pos.side;
+                  pos.side === "LONG" ? "买入" : pos.side === "SHORT" ? "卖出" : pos.side;
                 const posPnl = pos.pnl ?? pos.unrealizedPnl ?? 0;
                 return (
                   <div
@@ -315,7 +315,7 @@ export function MobileTradingPanel({
                         <span
                           className={cn(
                             "px-1.5 py-0.5 rounded text-xs font-bold",
-                            posSide === "BUY"
+                            posSide === "买入"
                               ? "bg-emerald-500/20 text-emerald-400"
                               : "bg-red-500/20 text-red-400",
                           )}
@@ -338,7 +338,7 @@ export function MobileTradingPanel({
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-slate-500 font-mono">
-                        Entry: {pos.entryPrice?.toFixed(5) ?? "—"}
+                        入场价：{pos.entryPrice?.toFixed(5) ?? "—"}
                       </span>
                       {onClosePosition && (
                         <button
@@ -351,7 +351,7 @@ export function MobileTradingPanel({
                               : "bg-slate-700 hover:bg-red-600/40 active:bg-red-600/60 text-slate-300 hover:text-white",
                           )}
                         >
-                          {closingPositionId === pos.id ? "Closing…" : "Close"}
+                          {closingPositionId === pos.id ? "平仓中…" : "平仓"}
                         </button>
                       )}
                     </div>
@@ -371,7 +371,7 @@ export function MobileTradingPanel({
                       : "bg-red-600/20 hover:bg-red-600/30 active:bg-red-600/40 text-red-400",
                   )}
                 >
-                  {closingAll ? "Closing All…" : "Close All Positions"}
+                  {closingAll ? "全部平仓中…" : "平仓全部持仓"}
                 </button>
               )}
             </>
@@ -383,9 +383,9 @@ export function MobileTradingPanel({
       {activeTab === "alerts" && (
         <div className="p-3 space-y-3">
           <div className="text-center py-8">
-            <p className="text-slate-500 text-sm">Price alerts coming soon</p>
+            <p className="text-slate-500 text-sm">价格提醒即将推出</p>
             <p className="text-xs text-slate-600 mt-1">
-              Set alerts for price levels and get push notifications
+              设置价格提醒，触发时推送通知
             </p>
           </div>
         </div>
@@ -411,28 +411,28 @@ export function MobileAccountBar({
   return (
     <div className="md:hidden flex items-center gap-2 px-2 py-1 bg-slate-800/80 border-b border-slate-700 overflow-x-auto no-scrollbar">
       <div className="shrink-0">
-        <div className="text-[9px] text-slate-500 uppercase">Bal</div>
+        <div className="text-[9px] text-slate-500 uppercase">余额</div>
         <div className="text-[11px] font-mono font-bold text-white">
           ${balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
         </div>
       </div>
       <div className="w-px h-5 bg-slate-700 shrink-0" />
       <div className="shrink-0">
-        <div className="text-[9px] text-slate-500 uppercase">Equity</div>
+        <div className="text-[9px] text-slate-500 uppercase">净值</div>
         <div className="text-[11px] font-mono font-bold text-white">
           ${equity.toLocaleString(undefined, { maximumFractionDigits: 0 })}
         </div>
       </div>
       <div className="w-px h-5 bg-slate-700 shrink-0" />
       <div className="shrink-0">
-        <div className="text-[9px] text-slate-500 uppercase">Margin</div>
+        <div className="text-[9px] text-slate-500 uppercase">保证金</div>
         <div className="text-[11px] font-mono font-bold text-slate-300">
           ${margin.toLocaleString(undefined, { maximumFractionDigits: 0 })}
         </div>
       </div>
       <div className="w-px h-5 bg-slate-700 shrink-0" />
       <div className="shrink-0">
-        <div className="text-[9px] text-slate-500 uppercase">P&L</div>
+        <div className="text-[9px] text-slate-500 uppercase">盈亏</div>
         <div
           className={cn(
             "text-[11px] font-mono font-bold",
