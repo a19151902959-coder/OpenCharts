@@ -1,5 +1,11 @@
 import { useEffect, useRef } from "react";
-import type { IChartApi, ISeriesApi, CandlestickData, Time } from "lightweight-charts";
+import type {
+  HistogramData,
+  IChartApi,
+  ISeriesApi,
+  CandlestickData,
+  Time,
+} from "lightweight-charts";
 import { LineStyle } from "lightweight-charts";
 import {
   sma,
@@ -11,11 +17,13 @@ import {
   stochastic,
   vwap,
   quantEdge,
+  orderFlow,
   INDICATOR_REGISTRY,
   type IndicatorType,
 } from "../../lib/indicators.ts";
 import { FvgBoxesPrimitive } from "../../lib/chart-plugins/fvg-boxes/fvg-boxes.ts";
-import { toIndicatorCandles } from "./utils.ts";
+import { ZoneBoxesPrimitive } from "../../lib/chart-plugins/order-flow/zone-boxes.ts";
+import { toIndicatorCandles, toOrderFlowCandles } from "./utils.ts";
 import { CHART_COLORS } from "./constants.ts";
 
 export function useIndicators(
@@ -24,6 +32,9 @@ export function useIndicators(
   chartData: CandlestickData<Time>[],
   activeIndicators: IndicatorType[],
   isDark: boolean,
+  // Order Flow needs real volume, which lives in volumeData (chartData
+  // strips it). Optional so existing callers keep working.
+  volumeData?: HistogramData<Time>[],
 ): void {
   const indicatorSeriesRef = useRef<Map<string, ISeriesApi<"Line"> | ISeriesApi<"Histogram">>>(
     new Map(),
@@ -32,6 +43,8 @@ export function useIndicators(
   // they need their own ref. Attach/detach is always guarded: a primitive
   // failure must never throw out of chart teardown (removeChild fix).
   const fvgPrimitiveRef = useRef<FvgBoxesPrimitive | null>(null);
+  // Same pattern for the Order Flow zone/trade boxes.
+  const orderFlowPrimitiveRef = useRef<ZoneBoxesPrimitive | null>(null);
   const colors = isDark ? CHART_COLORS.dark : CHART_COLORS.light;
 
   useEffect(() => {
@@ -61,6 +74,15 @@ export function useIndicators(
         /* already detached */
       }
       fvgPrimitiveRef.current = null;
+    }
+    // Same for the Order Flow boxes primitive.
+    if (orderFlowPrimitiveRef.current) {
+      try {
+        candleSeries.detachPrimitive(orderFlowPrimitiveRef.current);
+      } catch {
+        /* already detached */
+      }
+      orderFlowPrimitiveRef.current = null;
     }
 
     for (const type of activeIndicators) {
@@ -277,11 +299,55 @@ export function useIndicators(
           }
           break;
         }
+        case "ORDERFLOW": {
+          // TypeScript port of roan-maverick's Order Flow Strategy — see
+          // orderFlow() in lib/indicators.ts and docs/order-flow-strategy.pine.
+          // Markers (absorption / shift / LONG / SHORT / outcomes) are NOT
+          // set here: ChartPanel owns candle-series markers and merges
+          // Order Flow markers into the same setMarkers() call.
+          const ofCandles = toOrderFlowCandles(chartData, volumeData ?? []);
+          const of = orderFlow(ofCandles);
+          const line = (
+            key: string,
+            data: { time: number; value: number }[],
+            color: string,
+            lineWidth: 1 | 2,
+            lineStyle?: LineStyle,
+          ) => {
+            if (data.length === 0) return;
+            const s = chart.addLineSeries({ color, lineWidth, lineStyle, priceScaleId: "right" });
+            s.setData(data.map((p) => ({ time: p.time as Time, value: p.value })));
+            indicatorSeriesRef.current.set(key, s);
+          };
+          // Value area: VAH / VAL indigo, POC gold (Pine: glowing band).
+          line("ORDERFLOW-VAH", of.vaHigh, "#536dfe", 2);
+          line("ORDERFLOW-VAL", of.vaLow, "#536dfe", 2);
+          line("ORDERFLOW-POC", of.vaPoc, "#ffc400", 2);
+          // Fib zone mid (0.788) lines, dotted: green discount / red premium.
+          line("ORDERFLOW-LONGMID", of.longZoneMid, "rgba(0, 255, 156, 0.7)", 1, LineStyle.Dotted);
+          line("ORDERFLOW-SHORTMID", of.shortZoneMid, "rgba(255, 45, 85, 0.7)", 1, LineStyle.Dotted);
+          // Live stop (red dashed), target (green dashed), entry (silver dotted).
+          line("ORDERFLOW-STOP", of.stopLine, "#ff2d55", 2, LineStyle.Dashed);
+          line("ORDERFLOW-TARGET", of.targetLine, "#00ff9c", 2, LineStyle.Dashed);
+          line("ORDERFLOW-ENTRY", of.entryLine, "#c0c6d4", 1, LineStyle.Dotted);
+          // Zones, trapped-trader band, risk/reward, inefficiencies and
+          // liquidity levels as one boxes primitive.
+          if (of.boxes.length > 0) {
+            const primitive = new ZoneBoxesPrimitive(of.boxes);
+            try {
+              candleSeries.attachPrimitive(primitive);
+              orderFlowPrimitiveRef.current = primitive;
+            } catch {
+              /* primitive attach failed — lines above still render */
+            }
+          }
+          break;
+        }
       }
     }
 
-    // Detach the FVG primitive on cleanup (effect re-run / unmount) so it
-    // never outlives the series it was attached to.
+    // Detach the primitives on cleanup (effect re-run / unmount) so they
+    // never outlive the series they were attached to.
     return () => {
       if (fvgPrimitiveRef.current) {
         try {
@@ -290,6 +356,14 @@ export function useIndicators(
           /* already detached */
         }
         fvgPrimitiveRef.current = null;
+      }
+      if (orderFlowPrimitiveRef.current) {
+        try {
+          candleSeries.detachPrimitive(orderFlowPrimitiveRef.current);
+        } catch {
+          /* already detached */
+        }
+        orderFlowPrimitiveRef.current = null;
       }
     };
     // chartRef/candleSeriesRef are stable refs; colors derived from isDark dep.

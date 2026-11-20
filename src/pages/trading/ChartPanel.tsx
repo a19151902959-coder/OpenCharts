@@ -39,8 +39,10 @@ import { SessionBreaks } from "../../lib/chart-plugins/session-breaks/session-br
 import { SessionHighlighting } from "../../lib/chart-plugins/session-highlighting/session-highlighting.ts";
 import { TooltipPrimitive } from "../../lib/chart-plugins/tooltip/tooltip.ts";
 import {
+  orderFlow,
   quantEdge,
   type IndicatorType,
+  type OrderFlowResult,
   type QuantEdgeResult,
 } from "../../lib/indicators.ts";
 import { cn } from "../../lib/utils.ts";
@@ -77,6 +79,7 @@ import {
   getCandleBucketTime,
   getMinMove,
   toIndicatorCandles,
+  toOrderFlowCandles,
   toUnixMs,
   toUnixSeconds,
 } from "./utils.ts";
@@ -972,6 +975,69 @@ function QuantEdgeHudPanel({ hud }: { hud: QuantEdgeResult["hud"] }) {
   );
 }
 
+// Order Flow status panel (Pine dashboard, top-right corner — Quant-Edge
+// takes bottom-right). Rendered in React, not in a chart primitive — the
+// values come from orderFlow() and are passed down from ChartPanel so the
+// panel and the chart can never disagree.
+function OrderFlowHudPanel({ hud }: { hud: OrderFlowResult["hud"] }) {
+  const biasText =
+    hud.bias === 1 ? "VALUE UP ▲" : hud.bias === -1 ? "VALUE DOWN ▼" : "BALANCE";
+  const biasColor =
+    hud.bias === 1 ? "text-[#00ff9c]" : hud.bias === -1 ? "text-[#ff2d55]" : "text-white/70";
+  const posText =
+    hud.valuePos === "DISCOUNT"
+      ? "割安区"
+      : hud.valuePos === "PREMIUM"
+        ? "割高区"
+        : hud.valuePos === "INSIDE_VALUE"
+          ? "价值区内"
+          : "—";
+  return (
+    <div className="absolute top-2 right-2 z-20 pointer-events-none rounded-md border border-white/10 bg-black/70 px-2 py-1.5 text-[10px] font-mono shadow-lg">
+      <div className="text-white font-semibold">Order Flow</div>
+      <div className="grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 mt-0.5">
+        <span className="text-white/50">环境</span>
+        <span className={biasColor}>{biasText}</span>
+        <span className="text-white/50">位置</span>
+        <span className="text-white/90">{posText}</span>
+        <span className="text-white/50">状态</span>
+        <span className="text-[#00e5ff]">{hud.stateLabel}</span>
+        <span className="text-white/50">多头 / 空头</span>
+        <span className="text-white/90">
+          {hud.longState === "FIRST_SHIFT"
+            ? "待二次失败"
+            : hud.longState === "ABSORPTION"
+              ? "吸收中"
+              : "—"}
+          {" / "}
+          {hud.shortState === "FIRST_SHIFT"
+            ? "待二次失败"
+            : hud.shortState === "ABSORPTION"
+              ? "吸收中"
+              : "—"}
+        </span>
+        <span className="text-white/50">今日交易</span>
+        <span className="text-white/90">
+          {hud.tradesToday}/2 · 连亏 {hud.lossStreak}
+        </span>
+        <span className="text-white/50">持仓</span>
+        <span className="text-white/90">
+          {hud.trade
+            ? `${hud.trade.side === 1 ? "LONG" : "SHORT"} @ ${hud.trade.entry.toFixed(2)} · 止损 ${hud.trade.stop.toFixed(2)} · 目标 ${hud.trade.target.toFixed(2)}`
+            : (hud.lastOutcome ?? "无")}
+        </span>
+        <span className="text-white/50">VAH / POC / VAL</span>
+        <span className="text-white/90">
+          {hud.vaHigh !== null && hud.vaPoc !== null && hud.vaLow !== null
+            ? `${hud.vaHigh.toFixed(2)} / ${hud.vaPoc.toFixed(2)} / ${hud.vaLow.toFixed(2)}`
+            : "—"}
+        </span>
+        {!hud.hasVolume && <span className="text-[#ffd60a] col-span-2">无量数据：吸收按K线形态估算</span>}
+      </div>
+    </div>
+  );
+}
+
 // Symbol / timeframe / OHLCV / countdown header in the chart's top-left corner.
 // Extracted so the visibility branching doesn't inflate ChartPanel's CC.
 function ChartLegendHeader({
@@ -1368,6 +1434,15 @@ export function ChartPanel({
     return quantEdge(toIndicatorCandles(chartData));
   }, [activeIndicators, chartData]);
 
+  // ── Order Flow (TypeScript port of the Pine indicator) ───────
+  // Same pattern as Quant-Edge: computed from the same candles as the
+  // chart so the HUD and the markers always agree with the rendered
+  // lines. Volume comes from volumeData — chartData strips it.
+  const orderFlowResult: OrderFlowResult | null = useMemo(() => {
+    if (!activeIndicators.includes("ORDERFLOW") || chartData.length === 0) return null;
+    return orderFlow(toOrderFlowCandles(chartData, volumeData));
+  }, [activeIndicators, chartData, volumeData]);
+
   const {
     newsConfig,
     setNewsConfig,
@@ -1465,12 +1540,14 @@ export function ChartPanel({
     [onAddDrawing, pipDigits, timeframe, selectedSymbol],
   );
 
-  useIndicators(chartRef, candleSeriesRef, chartData, activeIndicators, isDark);
+  useIndicators(chartRef, candleSeriesRef, chartData, activeIndicators, isDark, volumeData);
 
   // ── Candle-series markers (single owner of setMarkers) ───────
   // Replay trade events AND Quant-Edge markers (BUY/SELL/BOS/CHoCH/抄底/
-  // 逃顶) share one setMarkers() call: lightweight-charts keeps exactly one
-  // marker set per series, so a second caller would clobber the first.
+  // 逃顶) AND Order Flow markers (absorption / shift / LONG / SHORT /
+  // outcomes / sweeps / impulse) share one setMarkers() call:
+  // lightweight-charts keeps exactly one marker set per series, so a
+  // second caller would clobber the first.
   useEffect(() => {
     const series = candleSeriesRef.current;
     if (!series) return;
@@ -1490,13 +1567,24 @@ export function ChartPanel({
         });
       }
     }
+    if (orderFlowResult) {
+      for (const m of orderFlowResult.markers) {
+        markers.push({
+          time: m.time as Time,
+          position: m.position,
+          color: m.color,
+          shape: m.shape,
+          text: m.text,
+        });
+      }
+    }
     // lightweight-charts requires markers sorted by time ascending
     markers.sort((a, b) => (a.time as number) - (b.time as number));
     series.setMarkers(markers);
     return () => {
       series.setMarkers([]);
     };
-  }, [replayTradeEvents, timeframe, quantEdgeResult]);
+  }, [replayTradeEvents, timeframe, quantEdgeResult, orderFlowResult]);
 
   // ── Candle close countdown timer ───────────────────────────
   // Daily and weekly bars get no countdown; that is decided when rendering the
@@ -2052,6 +2140,9 @@ export function ChartPanel({
 
       {/* Quant-Edge status panel (bottom-right, Pine HUD) */}
       {quantEdgeResult && <QuantEdgeHudPanel hud={quantEdgeResult.hud} />}
+
+      {/* Order Flow status panel (top-right, Pine dashboard) */}
+      {orderFlowResult && <OrderFlowHudPanel hud={orderFlowResult.hud} />}
 
       {/* Drag-to-edit tooltip */}
       {dragPrice && (

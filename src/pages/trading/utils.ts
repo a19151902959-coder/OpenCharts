@@ -58,6 +58,28 @@ export function toIndicatorCandles(candles: CandlestickData<Time>[]): CandleData
   }));
 }
 
+/**
+ * Convert candles for the Order Flow indicator, keeping real volume.
+ * chartData strips volume (it lives in volumeData, aligned by time), and
+ * toIndicatorCandles zeroes it — Order Flow needs volume for the value
+ * area, absorption and participation, so it gets its own converter.
+ */
+export function toOrderFlowCandles(
+  candles: CandlestickData<Time>[],
+  volumeData: { time: Time; value: number }[],
+): CandleData[] {
+  const volByTime = new Map<number, number>();
+  for (const v of volumeData) volByTime.set(v.time as number, v.value);
+  return candles.map((c) => ({
+    time: c.time as number,
+    open: c.open,
+    high: c.high,
+    low: c.low,
+    close: c.close,
+    volume: volByTime.get(c.time as number) ?? 0,
+  }));
+}
+
 /** Format seconds remaining as M:SS or H:MM:SS */
 export function formatCountdown(totalSec: number): string {
   if (totalSec <= 0) return "0:00";
