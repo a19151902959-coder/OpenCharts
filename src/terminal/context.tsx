@@ -128,7 +128,9 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
 
   // ── Chart configuration
   const chartPrefs = useChartPreferences();
-  const [activeIndicators, setActiveIndicators] = useState<IndicatorType[]>([]);
+  // Quant-Edge is on by default so the user sees the ported Pine indicator
+  // immediately on load; it can be toggled off from the Indicators menu.
+  const [activeIndicators, setActiveIndicators] = useState<IndicatorType[]>(["QUANTEDGE"]);
   const toggleIndicator = useCallback((type: IndicatorType) => {
     setActiveIndicators((prev) =>
       prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],

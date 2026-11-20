@@ -1,0 +1,90 @@
+//@version=6
+indicator("Quant-Edge 终极全能手机版", overlay=true, max_boxes_count=40, max_labels_count=80)
+
+// 1. 手机端功能独立开关（可在App设置中随时勾选）
+showTrend   = input.bool(true, "1. 显示 EMA200 牛熊趋势线")
+showBuySell = input.bool(true, "2. 显示 BUY / SELL 买卖箭头")
+showSMC     = input.bool(true, "3. 显示 SMC 结构 (BOS / CHoCH)")
+showFVG     = input.bool(true, "4. 显示 FVG 公平价值缺口方框")
+showTurtle  = input.bool(true, "5. 显示 海龟突破通道 (Donchian)")
+showConnors = input.bool(true, "6. 显示 RSI(2) 抄底/逃顶信号")
+showHUD     = input.bool(true, "7. 显示 右下角量化状态面板")
+
+// 2. EMA200 + MACD + RSI 买卖共振信号
+ema200 = ta.ema(close, 200)
+[macdLine, signalLine, _] = ta.macd(close, 12, 26, 9)
+rsi14 = ta.rsi(close, 14)
+atr14 = ta.atr(14)
+
+isBull = close > ema200
+buySignal = showBuySell and isBull and ta.crossover(macdLine, signalLine) and rsi14 > 50 and rsi14 < 70
+sellSignal = showBuySell and ((not isBull and ta.crossunder(macdLine, signalLine) and rsi14 < 50 and rsi14 > 30) or (isBull and ta.crossunder(close, ema200)))
+
+plot(showTrend ? ema200 : na, "EMA200 趋势线", color=isBull ? color.lime : color.orange, linewidth=2)
+plotshape(buySignal, title="买入信号", location=location.belowbar, color=color.green, style=shape.labelup, text="BUY", textcolor=color.white, size=size.small)
+plotshape(sellSignal, title="卖出信号", location=location.abovebar, color=color.red, style=shape.labeldown, text="SELL", textcolor=color.white, size=size.small)
+
+// 3. SMC 市场结构 (BOS & CHoCH)
+swingLen = input.int(5, "SMC 波段识别周期", minval=2)
+ph = ta.pivothigh(high, swingLen, swingLen)
+pl = ta.pivotlow(low, swingLen, swingLen)
+
+var float lastHigh = na
+var float lastLow = na
+var int smcTrend = 0
+
+lastHigh := not na(ph) ? ph : lastHigh
+lastLow := not na(pl) ? pl : lastLow
+
+bullBreak = not na(lastHigh) and ta.crossover(close, lastHigh)
+bearBreak = not na(lastLow) and ta.crossunder(close, lastLow)
+
+bullLbl = bullBreak and showSMC ? label.new(bar_index, high, smcTrend == -1 ? "CHoCH" : "BOS", style=label.style_label_down, color=smcTrend == -1 ? color.aqua : color.lime, textcolor=color.black, size=size.tiny) : na
+bearLbl = bearBreak and showSMC ? label.new(bar_index, low, smcTrend == 1 ? "CHoCH" : "BOS", style=label.style_label_up, color=smcTrend == 1 ? color.fuchsia : color.red, textcolor=color.white, size=size.tiny) : na
+
+smcTrend := bullBreak ? 1 : bearBreak ? -1 : smcTrend
+lastHigh := bullBreak ? na : lastHigh
+lastLow := bearBreak ? na : lastLow
+
+// 4. FVG 公平价值缺口方框
+bullFVG = showFVG and low > high[2] and close[1] > open[1]
+bearFVG = showFVG and high < low[2] and close[1] < open[1]
+
+bBox = bullFVG ? box.new(bar_index[2], low, bar_index + 6, high[2], bgcolor=color.new(color.green, 82), border_color=color.new(color.green, 50)) : na
+sBox = bearFVG ? box.new(bar_index[2], low[2], bar_index + 6, high, bgcolor=color.new(color.red, 82), border_color=color.new(color.red, 50)) : na
+
+// 5. 海龟交易法则 (Donchian 20日通道)
+dcLen = input.int(20, "海龟通道周期")
+dcUpper = ta.highest(high, dcLen)[1]
+dcLower = ta.lowest(low, dcLen)[1]
+dcMid = (dcUpper + dcLower) / 2
+
+plot(showTurtle ? dcUpper : na, "海龟上轨", color=color.new(color.teal, 30), linewidth=1)
+plot(showTurtle ? dcLower : na, "海龟下轨", color=color.new(color.maroon, 30), linewidth=1)
+plot(showTurtle ? dcMid : na, "海龟中轨", color=color.new(color.gray, 60), style=plot.style_circles)
+
+// 6. Larry Connors 2日RSI 抄底/逃顶
+rsi2 = ta.rsi(close, 2)
+sma200 = ta.sma(close, 200)
+dipBuy = showConnors and close > sma200 and rsi2 < 10
+popSell = showConnors and close < sma200 and rsi2 > 90
+
+plotshape(dipBuy, title="超跌抄底", location=location.belowbar, color=color.aqua, style=shape.diamond, text="抄底", textcolor=color.aqua, size=size.tiny)
+plotshape(popSell, title="超买回调", location=location.abovebar, color=color.yellow, style=shape.diamond, text="逃顶", textcolor=color.yellow, size=size.tiny)
+
+// 7. 手机右下角迷你状态面板（防遮挡顶部文字）
+var table hud = showHUD ? table.new(position.bottom_right, 2, 5, bgcolor=color.new(#131722, 18), border_width=1, border_color=color.gray) : na
+table.cell(hud, 0, 0, "Quant-Edge 面板", text_color=color.white, text_size=size.tiny, bgcolor=color.new(color.blue, 40))
+table.cell(hud, 1, 0, "实时状态", text_color=color.white, text_size=size.tiny, bgcolor=color.new(color.blue, 40))
+table.cell(hud, 0, 1, "SMC 结构", text_color=color.silver, text_size=size.tiny)
+table.cell(hud, 1, 1, smcTrend == 1 ? "多头结构 ▲" : smcTrend == -1 ? "空头结构 ▼" : "盘整中", text_color=smcTrend == 1 ? color.lime : color.red, text_size=size.tiny)
+table.cell(hud, 0, 2, "大趋势 (EMA200)", text_color=color.silver, text_size=size.tiny)
+table.cell(hud, 1, 2, isBull ? "牛市区域" : "熊市区域", text_color=isBull ? color.lime : color.orange, text_size=size.tiny)
+table.cell(hud, 0, 3, "RSI(14) / RSI(2)", text_color=color.silver, text_size=size.tiny)
+table.cell(hud, 1, 3, str.tostring(rsi14, "#.1") + " / " + str.tostring(rsi2, "#.1"), text_color=color.white, text_size=size.tiny)
+table.cell(hud, 0, 4, "ATR 止损参考", text_color=color.silver, text_size=size.tiny)
+table.cell(hud, 1, 4, str.tostring(atr14 * 2, "#.##"), text_color=color.yellow, text_size=size.tiny)
+
+// 8. 手机弹窗推送警报
+alertcondition(buySignal, title="手机买入提醒", message="{{ticker}} 触发 BUY 买入信号，现价: {{close}}")
+alertcondition(sellSignal, title="手机卖出提醒", message="{{ticker}} 触发 SELL 卖出信号，现价: {{close}}")
