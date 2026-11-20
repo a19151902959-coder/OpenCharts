@@ -114,10 +114,22 @@ export class TooltipPrimitive implements ISeriesPrimitive<Time> {
   detached(): void {
     const chart = this.chart();
     if (chart) {
-      chart.unsubscribeCrosshairMove(this._moveHandler);
+      try {
+        chart.unsubscribeCrosshairMove(this._moveHandler);
+      } catch (err) {
+        // Never let cleanup throw out of detached(): lightweight-charts calls
+        // detached() during chart.remove(), and a throw there propagates
+        // through React effect cleanup to the ErrorBoundary.
+        console.warn("[TooltipPrimitive] unsubscribeCrosshairMove failed:", err);
+      }
     }
-    this._tooltip?.destroy();
-    this._tooltip = undefined;
+    try {
+      this._tooltip?.destroy();
+    } catch (err) {
+      console.warn("[TooltipPrimitive] tooltip destroy failed:", err);
+    } finally {
+      this._tooltip = undefined;
+    }
   }
 
   paneViews() {

@@ -49,6 +49,30 @@ export class ErrorBoundary extends Component<Props, State> {
         window.location.reload();
       }
     }
+
+    // Transient DOM race: a third-party embed or chart primitive moved a node
+    // before React or a cleanup removed it ("Failed to execute 'removeChild'
+    // on 'Node': The node to be removed is not a child of this node"). This
+    // is the crash mobile users hit a few seconds after load, with no
+    // interaction. Auto-reset once per 10s window so the chart re-mounts in
+    // place instead of leaving a stuck error screen. Do NOT reload the whole
+    // page here — the underlying guards (TooltipElement.destroy, safeClear)
+    // should prevent recurrence, and a reload loop would be worse.
+    const isRemoveChildError =
+      message.includes("removeChild") ||
+      message.includes("not a child") ||
+      message.includes("NotFoundError") ||
+      message.includes("HierarchyRequestError") ||
+      message.includes("The node to be removed is not a child");
+    if (isRemoveChildError) {
+      const RESET_KEY = "opencharts_removechild_reset";
+      const last = safeSession.getItem(RESET_KEY);
+      if (!last || Date.now() - Number(last) > 10_000) {
+        safeSession.setItem(RESET_KEY, String(Date.now()));
+        console.warn("[ErrorBoundary] removeChild race, auto-resetting:", error);
+        setTimeout(() => this.setState({ hasError: false, error: undefined }), 0);
+      }
+    }
   }
 
   handleReset = () => {

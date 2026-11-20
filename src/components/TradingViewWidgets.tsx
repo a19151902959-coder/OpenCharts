@@ -25,18 +25,29 @@ export function isTradingViewAllowed(): boolean {
 // move nodes) after we append them.  When deps change or the component unmounts
 // our cleanup tries container.innerHTML = "" which internally calls removeChild
 // on nodes that TradingView has already moved — throwing a DOM exception that
-// React 18 propagates to the nearest ErrorBoundary.  Wrapping the clear in
-// try/catch prevents the exception from escaping the effect cleanup.
+// React propagates to the nearest ErrorBoundary.  Remove children one by one,
+// only when each is still a child of the container, and swallow ALL errors:
+// this runs in React effect cleanup, where any throw reaches the ErrorBoundary
+// and leaves the user on a stuck error screen.
 export function safeClear(container: HTMLDivElement) {
   try {
-    container.innerHTML = "";
-  } catch (err) {
-    // TradingView's async embed scripts move/reparent DOM nodes after appending,
-    // so removeChild (called internally by innerHTML="") throws HierarchyRequestError
-    // or NotFoundError when the node is no longer a child. Swallow those specific
-    // DOM exceptions only — let anything else (SecurityError, etc.) propagate so
-    // real errors surface to the React ErrorBoundary and developer console.
-    if (!(err instanceof DOMException)) throw err;
+    let child = container.firstChild;
+    while (child) {
+      const next = child.nextSibling;
+      try {
+        if (child.parentNode === container) container.removeChild(child);
+      } catch {
+        // Node was moved/removed by the embed script in between — ignore.
+      }
+      child = next;
+    }
+  } catch {
+    // Last resort: try the bulk clear, swallow anything it throws.
+    try {
+      container.innerHTML = "";
+    } catch {
+      // Ignore — the container is being torn down anyway.
+    }
   }
 }
 

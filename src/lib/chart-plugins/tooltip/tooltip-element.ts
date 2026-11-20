@@ -130,7 +130,33 @@ export class TooltipElement {
   }
 
   public destroy() {
-    if (this._chart && this._element) this._chart.chartElement().removeChild(this._element);
+    const element = this._element;
+    if (!element) return;
+    // Make destroy() idempotent: clear refs first so a second call is a
+    // no-op, even if lightweight-charts detaches primitives twice (StrictMode
+    // double effects, chart.remove() during React cleanup, mobile timing
+    // races on slow networks).
+    this._element = null;
+    this._titleElement = null;
+    this._priceElement = null;
+    this._dateElement = null;
+    this._timeElement = null;
+    this._chart = null;
+    try {
+      // Only remove the element if it is still a child of a parent. If the
+      // chart element was already detached (or lightweight-charts moved the
+      // node), removeChild throws NotFoundError — the exact crash seen on
+      // mobile: "Failed to execute 'removeChild' on 'Node': The node to be
+      // removed is not a child of this node."
+      const parent = element.parentNode;
+      if (parent) parent.removeChild(element);
+    } catch (err) {
+      // destroy() runs in effect cleanup / detached(), where any throw
+      // propagates to the React ErrorBoundary. Swallow DOM errors; log
+      // anything else but still never throw out of destroy().
+      if (err instanceof DOMException) return;
+      console.warn("[TooltipElement] destroy failed:", err);
+    }
   }
 
   public applyOptions(options: Partial<TooltipOptions>) {
